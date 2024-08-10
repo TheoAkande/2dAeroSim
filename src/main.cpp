@@ -27,9 +27,16 @@ struct Particle {
 
 struct Object {
     vector<glm::vec2> *vertices;
+    vector<Line> *edges;
     float mass, scale;
     float x, y;
 };
+
+struct Line {
+    float x, y;
+    float dx, dy;
+};
+
 
 Particle particles[numParticlesX + numParticlesY];
 Object objects[numObjects];
@@ -38,6 +45,7 @@ Object load2dObject(const char *filePath) {
 
     Object newObject;
     vector<glm::vec2> *vertices = new vector<glm::vec2>();
+    vector<Line> *edges = new vector<Line>();
 
     newObject.vertices = vertices;
     newObject.x = 0.0f;
@@ -60,24 +68,37 @@ Object load2dObject(const char *filePath) {
         }
     }
     fileStream.close();
+
+    for (int i = 0; i < vertices->size(); i++) {
+        Line edge;
+        edge.x = vertices->at(i).x;
+        edge.y = vertices->at(i).y;
+        edge.dx = vertices->at((i + 1) % vertices->size()).x - vertices->at(i).x;
+        edge.dy = vertices->at((i + 1) % vertices->size()).y - vertices->at(i).y;
+        edges->push_back(edge);
+    }
+
     return newObject;
 }
 
+void printObject(Object object) {
+    cout << "Mass: " << object.mass << endl;
+    cout << "Scale: " << object.scale << endl;
+    cout << "Position: (" << object.x << ", " << object.y << ")" << endl;
+    for (int i = 0; i < object.vertices->size(); i++) {
+        cout << "Vertex " << i << ": " << object.vertices->at(i).x << ", " << object.vertices->at(i).y << endl;
+    }
+}
+
 void init(void) {
-
     objects[0] = load2dObject("assets/objects/triangle.2dObj");
-
 }
 
 int main(void) {
 
     init();
 
-    for (int i = 0; i < objects[0].vertices->size(); i++) {
-        cout << "Vertex " << i << ": " << objects[0].vertices->at(i).x << ", " << objects[0].vertices->at(i).y << endl;
-    }
-    cout << "Mass: " << objects[0].mass << endl;
-    cout << "Scale: " << objects[0].scale << endl;
+    printObject(objects[0]);
 
     exit(EXIT_SUCCESS);
 
