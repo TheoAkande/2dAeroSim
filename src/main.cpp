@@ -24,7 +24,7 @@ using namespace std;
 
 #define numVBOs 2
 #define numVAOs 1
-#define numCBs 2
+#define numCBs 3
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
@@ -36,7 +36,7 @@ GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
 // for compute shader
-GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc;
+GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -53,8 +53,9 @@ struct Particle {
 };
 
 struct Line {
-    float x, y;
-    float dx, dy;
+    float x1, y1;
+    float x2, y2;
+    float nx, ny;
 };
 
 struct Object {
@@ -62,6 +63,7 @@ struct Object {
     vector<Line> *edges;
     float mass, scale;
     float x, y;
+    int numEdges;
 };
 
 Particle particles[numParticlesX * numParticlesY];
@@ -80,6 +82,8 @@ Object load2dObject(const char *filePath) {
     newObject.mass = 1.0f;
     newObject.scale = 1.0f;
 
+    int nv = 0;
+
     ifstream fileStream(filePath, ios::in);
     string line = "";
     while (!fileStream.eof()) {
@@ -88,6 +92,7 @@ Object load2dObject(const char *filePath) {
             glm::vec2 vertex;
             sscanf(line.c_str(), "v %f %f", &vertex.x, &vertex.y);
             vertices->push_back(vertex);
+            nv++;
         } else if (line.c_str()[0] == 'm') {
             sscanf(line.c_str(), "m %f", &newObject.mass);
         } else if (line.c_str()[0] == 's') {
@@ -96,14 +101,19 @@ Object load2dObject(const char *filePath) {
     }
     fileStream.close();
 
-    for (int i = 0; i < vertices->size(); i++) {
+    for (int i = 0; i < vertices->size() - 1; i++) {
         Line edge;
-        edge.x = vertices->at(i).x;
-        edge.y = vertices->at(i).y;
-        edge.dx = vertices->at((i + 1) % vertices->size()).x - vertices->at(i).x;
-        edge.dy = vertices->at((i + 1) % vertices->size()).y - vertices->at(i).y;
+        edge.x1 = vertices->at(i).x;
+        edge.y1 = vertices->at(i).y;
+        edge.x2 = vertices->at((i + 1)).x;
+        edge.y2 = vertices->at((i + 1)).y;
+        edge.nx = edge.y1 - edge.y2;
+        edge.ny = edge.x2 - edge.x1;
         edges->push_back(edge);
     }
+
+    newObject.numEdges = nv - 1;
+    newObject.edges = edges;
 
     return newObject;
 }
@@ -134,9 +144,7 @@ void createParticles(void) {
 }
 
 void setupScene(void) {
-
-    vector<float> particlePoints;
-    vector<float> objectLines;
+    vector<float> objectLines = vector<float>();
 
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
         curInBuffer[i * numParticleFloats] = particles[i].x;
@@ -174,9 +182,6 @@ void bindComputeBuffers(void) {
 }
 
 void setupComputeBuffers(void) {
-    curInBuffer = &buffer1[0];
-    curOutBuffer = &buffer2[0];
-
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
         curInBuffer[i * numParticleFloats] = particles[i].x;
         curInBuffer[i * numParticleFloats + 1] = particles[i].y;
@@ -189,6 +194,17 @@ void setupComputeBuffers(void) {
 
     glGenBuffers(numCBs, computeBuffers);
     bindComputeBuffers();
+
+    // Doesn't need to be rebound each time (yet at least)
+    vector<float> objectEdges;
+    for (int i = 0; i < objects[0].numEdges; i++) {
+        objectEdges.push_back(objects[0].edges->at(i).x1);
+        objectEdges.push_back(objects[0].edges->at(i).y1);
+        objectEdges.push_back(objects[0].edges->at(i).x2);
+        objectEdges.push_back(objects[0].edges->at(i).y2);
+    }
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[2]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, objects[0].numEdges * 4 * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
 
 void display(GLFWwindow *window) {
@@ -211,11 +227,6 @@ void display(GLFWwindow *window) {
     // Draw object
     glUseProgram(objectRenderingProgram);
     glPointSize(5.0f);
-    objectTransform = glm::mat4(1.0f);
-    objectTransform *= glm::translate(objectTransform, glm::vec3(objects[0].x, objects[0].y, 0.0f));
-    objectTransform *= glm::scale(objectTransform, glm::vec3(objects[0].scale, objects[0].scale, 1.0f));
-
-    glUniformMatrix4fv(glGetUniformLocation(objectRenderingProgram, "model"), 1, GL_FALSE, glm::value_ptr(objectTransform));
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
     glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
@@ -237,8 +248,10 @@ void init(void) {
 
     createParticles();
 
-    setupComputeBuffers();
+    curInBuffer = &buffer1[0];
+    curOutBuffer = &buffer2[0];
     setupScene();
+    setupComputeBuffers();
 }
 
 void runFrame(GLFWwindow *window, double currentTime) {
@@ -261,6 +274,8 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(xForceLoc, xForce);
     yForceLoc = glGetUniformLocation(computeProgram, "yForce");
     glUniform1f(yForceLoc, yForce);
+    numEdgesLoc = glGetUniformLocation(computeProgram, "numEdges");
+    glUniform1i(numEdgesLoc, objects[0].numEdges);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
