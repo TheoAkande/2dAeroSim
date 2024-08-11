@@ -1,6 +1,6 @@
 #version 430
 
-layout(location = 0) in vec2 vertexPosition;
+layout (location = 0) in vec2 vertexPosition;
 
 uniform mat4 model;
 

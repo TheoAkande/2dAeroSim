@@ -21,13 +21,16 @@ float random(uint seed) {
 void main()
 { 
     uint thisIndex = gl_GlobalInvocationID.x;
-    uint seed = uint(inVals[thisIndex * 3 + 2]);
+    uint seed = uint(inVals[thisIndex * 7 + 6]);
     float rand = (random(seed) - 0.5) * rangeOfMotion;
-    outVals[thisIndex * 3] = inVals[thisIndex * 3] + rand;
-
+    outVals[thisIndex * 7] = inVals[thisIndex * 7] + rand;
     seed = hash(seed);
     rand = (random(seed) - 0.5) * rangeOfMotion;
-    outVals[thisIndex * 3 + 1] = inVals[thisIndex * 3 + 1] + rand;
+    outVals[thisIndex * 7 + 1] = inVals[thisIndex * 7 + 1] + rand;
     seed = hash(seed);
-    outVals[thisIndex * 3 + 2] = seed;
+    outVals[thisIndex * 7 + 2] = inVals[thisIndex * 7 + 2];
+    outVals[thisIndex * 7 + 3] = inVals[thisIndex * 7 + 3];
+    outVals[thisIndex * 7 + 4] = inVals[thisIndex * 7 + 4];
+    outVals[thisIndex * 7 + 5] = inVals[thisIndex * 7 + 5];
+    outVals[thisIndex * 7 + 6] = seed;
 }
