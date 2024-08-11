@@ -16,7 +16,8 @@ using namespace std;
 #define numParticlesX 50
 #define numParticlesY 50
 #define particleMass 1.0f
-#define rangeOfMotion 0.01f
+#define rangeOfMotion 0.001f
+#define vMax 0.01f
 #define numParticleFloats 7
 
 #define numObjects 1
@@ -25,11 +26,17 @@ using namespace std;
 #define numVAOs 1
 #define numCBs 2
 
+double pastTime = 0.0;
+double deltaTime = 0.0;
+
 // for window
 int height = 1080;
 int width = 1920;
 GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
+
+// for compute shader
+GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -183,7 +190,7 @@ void setupComputeBuffers(void) {
     bindComputeBuffers();
 }
 
-void display(GLFWwindow *window, double currentTime) {
+void display(GLFWwindow *window) {
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
     glfwGetFramebufferSize(window, &width, &height);
@@ -234,12 +241,21 @@ void init(void) {
 }
 
 void runFrame(GLFWwindow *window, double currentTime) {
-    display(window, currentTime);
+    deltaTime = currentTime - pastTime;
+    pastTime = currentTime;
+
+    display(window);
 
     glUseProgram(computeProgram);
 
-    GLuint romLoc = glGetUniformLocation(computeProgram, "rangeOfMotion");
+    romLoc = glGetUniformLocation(computeProgram, "rangeOfMotion");
     glUniform1f(romLoc, rangeOfMotion);
+    floatNumLoc = glGetUniformLocation(computeProgram, "numFloats");
+    glUniform1i(floatNumLoc, numParticleFloats);
+    vMaxLoc = glGetUniformLocation(computeProgram, "vMax");
+    glUniform1f(vMaxLoc, vMax);
+    dtLoc = glGetUniformLocation(computeProgram, "dt");
+    glUniform1f(dtLoc, (float)deltaTime);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);

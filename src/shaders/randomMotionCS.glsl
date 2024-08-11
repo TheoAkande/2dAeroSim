@@ -6,6 +6,9 @@ layout (binding = 0) buffer inputBuffer { float inVals[]; };
 layout (binding = 1) buffer outputBuffer { float outVals[]; };
 
 uniform float rangeOfMotion;
+uniform float vMax;
+uniform int numFloats;
+uniform float dt;
 
 uint hash(uint x) {
     x = ((x >> 16u) ^ x) * 0x45d9f3bu;
@@ -21,16 +24,21 @@ float random(uint seed) {
 void main()
 { 
     uint thisIndex = gl_GlobalInvocationID.x;
-    uint seed = uint(inVals[thisIndex * 7 + 6]);
+    float xSign = inVals[thisIndex * numFloats + 2] > 0.0 ? 1.0 : -1.0;
+    float ySign = inVals[thisIndex * numFloats + 3] > 0.0 ? 1.0 : -1.0;
+    outVals[thisIndex * numFloats] = 
+        inVals[thisIndex * numFloats] 
+        + ((abs(inVals[thisIndex * numFloats + 2]) > vMax ? vMax * xSign : inVals[thisIndex * numFloats + 2])) * dt;                    // x = x + vx (or vMax)
+    outVals[thisIndex * numFloats + 1] = inVals[thisIndex * numFloats + 1] 
+        + ((abs(inVals[thisIndex * numFloats + 3]) > vMax ? vMax * ySign : inVals[thisIndex * numFloats + 3])) * dt;                    // y = y + vy (or vMax)
+    outVals[thisIndex * numFloats + 2] = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4];     // vx = vx + ax
+    outVals[thisIndex * numFloats + 3] = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5];     // vy = vy + ay
+    uint seed = uint(inVals[thisIndex * numFloats + 6]);
     float rand = (random(seed) - 0.5) * rangeOfMotion;
-    outVals[thisIndex * 7] = inVals[thisIndex * 7] + rand;
+    outVals[thisIndex * numFloats + 4] = inVals[thisIndex * numFloats + 4] + rand;                                  // ax = ax + random
     seed = hash(seed);
     rand = (random(seed) - 0.5) * rangeOfMotion;
-    outVals[thisIndex * 7 + 1] = inVals[thisIndex * 7 + 1] + rand;
+    outVals[thisIndex * numFloats + 5] = inVals[thisIndex * numFloats + 5] + rand;                                  // ay = ay + random
     seed = hash(seed);
-    outVals[thisIndex * 7 + 2] = inVals[thisIndex * 7 + 2];
-    outVals[thisIndex * 7 + 3] = inVals[thisIndex * 7 + 3];
-    outVals[thisIndex * 7 + 4] = inVals[thisIndex * 7 + 4];
-    outVals[thisIndex * 7 + 5] = inVals[thisIndex * 7 + 5];
-    outVals[thisIndex * 7 + 6] = seed;
+    outVals[thisIndex * numFloats + 6] = seed;                                                                      // seed = newSeed                                    
 }
