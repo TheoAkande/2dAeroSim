@@ -17,6 +17,7 @@ using namespace std;
 #define numParticlesY 50
 #define particleMass 1.0f
 #define rangeOfMotion 0.01f
+#define numParticleFloats 7
 
 #define numObjects 1
 
@@ -31,8 +32,10 @@ GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
-float inBuffer[numParticlesX * numParticlesY * 3];
-float outBuffer[numParticlesX * numParticlesY * 3];
+float *curInBuffer;
+float *curOutBuffer;
+float buffer1[numParticlesX * numParticlesY * 3];
+float buffer2[numParticlesX * numParticlesY * 3];
 
 struct Particle {
     float x, y;
@@ -130,6 +133,11 @@ void setupScene(void) {
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
         particlePoints.push_back(particles[i].x);
         particlePoints.push_back(particles[i].y);
+        // particlePoints.push_back(particles[i].vx);
+        // particlePoints.push_back(particles[i].vy);
+        // particlePoints.push_back(particles[i].ax);
+        // particlePoints.push_back(particles[i].ay);
+        // particlePoints.push_back(particles[i].seed);
     }
 
     for (int i = 0; i < objects[0].vertices->size(); i++) {
@@ -150,19 +158,25 @@ void setupScene(void) {
     glBufferData(GL_ARRAY_BUFFER, objectLines.size() * sizeof(float), &objectLines[0], GL_STATIC_DRAW);
 }
 
+void bindComputeBuffers(void) {
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[0]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), curInBuffer, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), NULL, GL_STATIC_READ);
+}
+
 void setupComputeBuffers(void) {
+    curInBuffer = &buffer1[0];
+    curOutBuffer = &buffer2[0];
 
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
-        inBuffer[i * 3] = particles[i].x;
-        inBuffer[i * 3 + 1] = particles[i].y;
-        inBuffer[i * 3 + 2] = particles[i].seed;
+        curInBuffer[i * 3] = particles[i].x;
+        curInBuffer[i * 3 + 1] = particles[i].y;
+        curInBuffer[i * 3 + 2] = particles[i].seed;
     }
 
     glGenBuffers(numCBs, computeBuffers);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[0]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), inBuffer, GL_STATIC_DRAW);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), NULL, GL_STATIC_READ);
+    bindComputeBuffers();
 }
 
 void display(GLFWwindow *window, double currentTime) {
@@ -226,18 +240,18 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glDispatchCompute(numParticlesX * numParticlesY, 1, 1); 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
-    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(outBuffer), outBuffer);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);
 
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
-        particles[i].x = outBuffer[i * 3];
-        particles[i].y = outBuffer[i * 3 + 1];
-        inBuffer[i * 3] = outBuffer[i * 3];
-        inBuffer[i * 3 + 1] = outBuffer[i * 3 + 1];
-        inBuffer[i * 3 + 2] = outBuffer[i * 3 + 2];
+        particles[i].x = curOutBuffer[i * 3];
+        particles[i].y = curOutBuffer[i * 3 + 1];
     }
 
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[0]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), inBuffer, GL_STATIC_DRAW);
+    float *temp = curOutBuffer;
+    curOutBuffer = curInBuffer;
+    curInBuffer = temp;
+
+    bindComputeBuffers();
 
     setupScene();
 
