@@ -16,8 +16,8 @@ using namespace std;
 #define numParticlesX 50
 #define numParticlesY 50
 #define particleMass 1.0f
-#define rangeOfMotion 0.001f
-#define vMax 0.01f
+#define rangeOfMotion 0.5f
+#define vMax 0.1f
 #define numParticleFloats 7
 
 #define numObjects 1
@@ -36,13 +36,14 @@ GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
 // for compute shader
-GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc;
+GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
 float *curOutBuffer;
 float buffer1[numParticlesX * numParticlesY * numParticleFloats];
 float buffer2[numParticlesX * numParticlesY * numParticleFloats];
+float xForce, yForce = 0.0f;
 
 struct Particle {
     float x, y;
@@ -256,6 +257,10 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(vMaxLoc, vMax);
     dtLoc = glGetUniformLocation(computeProgram, "dt");
     glUniform1f(dtLoc, (float)deltaTime);
+    xForceLoc = glGetUniformLocation(computeProgram, "xForce");
+    glUniform1f(xForceLoc, xForce);
+    yForceLoc = glGetUniformLocation(computeProgram, "yForce");
+    glUniform1f(yForceLoc, yForce);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
@@ -264,11 +269,6 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);
 
-    for (int i = 0; i < numParticlesX * numParticlesY; i++) {
-        particles[i].x = curOutBuffer[i * numParticleFloats];
-        particles[i].y = curOutBuffer[i * numParticleFloats + 1];
-    }
-
     bindComputeBuffers();
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
@@ -276,6 +276,21 @@ void runFrame(GLFWwindow *window, double currentTime) {
     float *temp = curOutBuffer;
     curOutBuffer = curInBuffer;
     curInBuffer = temp;
+
+    xForce = 0.0f;
+    yForce = 0.0f;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        xForce = -0.1f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        xForce = 0.1f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        yForce = 0.1f;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        yForce = -0.1f;
+    }
 }
 
 int main(void) {
