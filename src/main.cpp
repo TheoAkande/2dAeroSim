@@ -16,6 +16,7 @@ using namespace std;
 #define numParticlesX 50
 #define numParticlesY 50
 #define particleMass 1.0f
+#define rangeOfMotion 0.01f
 
 #define numObjects 1
 
@@ -32,7 +33,6 @@ GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float inBuffer[numParticlesX * numParticlesY * 3];
 float outBuffer[numParticlesX * numParticlesY * 3];
-float particleOffsetX, particleOffsetY;
 
 struct Particle {
     float x, y;
@@ -150,6 +150,21 @@ void setupScene(void) {
     glBufferData(GL_ARRAY_BUFFER, objectLines.size() * sizeof(float), &objectLines[0], GL_STATIC_DRAW);
 }
 
+void setupComputeBuffers(void) {
+
+    for (int i = 0; i < numParticlesX * numParticlesY; i++) {
+        inBuffer[i * 3] = particles[i].x;
+        inBuffer[i * 3 + 1] = particles[i].y;
+        inBuffer[i * 3 + 2] = particles[i].seed;
+    }
+
+    glGenBuffers(numCBs, computeBuffers);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[0]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), inBuffer, GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), NULL, GL_STATIC_READ);
+}
+
 void display(GLFWwindow *window, double currentTime) {
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -188,9 +203,6 @@ void display(GLFWwindow *window, double currentTime) {
 void init(void) {
     objects[0] = load2dObject("assets/objects/triangle.2dObj");
 
-    particleOffsetX = width / (2 * numParticlesX);  // particles start at the left side of the scene
-    particleOffsetY = height / numParticlesY;       // particles fill entire y axis of scene
-
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
     computeProgram = Utils::createShaderProgram("shaders/randomMotionCS.glsl");
@@ -198,6 +210,37 @@ void init(void) {
     createParticles();
 
     setupScene();
+    setupComputeBuffers();
+}
+
+void runFrame(GLFWwindow *window, double currentTime) {
+    display(window, currentTime);
+
+    glUseProgram(computeProgram);
+
+    GLuint romLoc = glGetUniformLocation(computeProgram, "rangeOfMotion");
+    glUniform1f(romLoc, rangeOfMotion);
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
+    glDispatchCompute(numParticlesX * numParticlesY, 1, 1); 
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
+    glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(outBuffer), outBuffer);
+
+    for (int i = 0; i < numParticlesX * numParticlesY; i++) {
+        particles[i].x = outBuffer[i * 3];
+        particles[i].y = outBuffer[i * 3 + 1];
+        inBuffer[i * 3] = outBuffer[i * 3];
+        inBuffer[i * 3 + 1] = outBuffer[i * 3 + 1];
+        inBuffer[i * 3 + 2] = outBuffer[i * 3 + 2];
+    }
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[0]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * 3 * sizeof(float), inBuffer, GL_STATIC_DRAW);
+
+    setupScene();
+
 }
 
 int main(void) {
@@ -214,7 +257,7 @@ int main(void) {
     glfwSwapInterval(1);
     init();
     while (!glfwWindowShouldClose(window)) {
-        display(window, glfwGetTime());
+        runFrame(window, glfwGetTime());
     }
     glfwDestroyWindow(window);
     glfwTerminate();
