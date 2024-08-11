@@ -21,19 +21,24 @@ using namespace std;
 
 #define numVBOs 2
 #define numVAOs 1
+#define numCBs 2
 
 // for window
 int height = 1080;
 int width = 1920;
 GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
-GLuint particleRenderingProgram, objectRenderingProgram;
+GLuint computeBuffers[numCBs];
+GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
+float inBuffer[numParticlesX * numParticlesY * 3];
+float outBuffer[numParticlesX * numParticlesY * 3];
 float particleOffsetX, particleOffsetY;
 
 struct Particle {
     float x, y;
     float vx, vy;
     float ax, ay;
+    GLuint seed;
 };
 
 struct Line {
@@ -112,6 +117,7 @@ void createParticles(void) {
             particles[i + j * numParticlesX].vy = 0;
             particles[i + j * numParticlesX].ax = 0;
             particles[i + j * numParticlesX].ay = 0;
+            particles[i + j * numParticlesX].seed = rand();
         }
     }
 }
@@ -187,6 +193,7 @@ void init(void) {
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
+    computeProgram = Utils::createShaderProgram("shaders/randomMotionCS.glsl");
 
     createParticles();
 
