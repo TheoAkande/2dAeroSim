@@ -90,7 +90,6 @@ int Utils::finalizeShaderProgram(GLuint sprogram)
 	GLint linked;
 	glLinkProgram(sprogram);
 	checkOpenGLError();
-	cout  << "logs :";
 	printProgramLog(sprogram);
 	cout << endl;
 	glGetProgramiv(sprogram, GL_LINK_STATUS, &linked);
@@ -108,6 +107,16 @@ GLuint Utils::createShaderProgram(const char *cs) {
 	glAttachShader(csProgram, computeShader);
 	finalizeShaderProgram(csProgram);
 	return csProgram;
+}
+
+GLuint Utils::createShaderProgram(const char *vp, const char *fp) {
+	GLuint vShader = prepareShader(GL_VERTEX_SHADER, vp);
+	GLuint fShader = prepareShader(GL_FRAGMENT_SHADER, fp);
+	GLuint vfprogram = glCreateProgram();
+	glAttachShader(vfprogram, vShader);
+	glAttachShader(vfprogram, fShader);
+	finalizeShaderProgram(vfprogram);
+	return vfprogram;
 }
 
 GLuint Utils::loadTexture(const char *texImagePath)

@@ -23,5 +23,6 @@ public:
 	static bool checkOpenGLError();
 	static void printShaderLog(GLuint shader);
 	static GLuint createShaderProgram(const char *cs);
+	static GLuint createShaderProgram(const char *vp, const char *fp);
 	static GLuint loadTexture(const char *texImagePath);
 };

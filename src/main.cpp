@@ -19,10 +19,26 @@ using namespace std;
 
 #define numObjects 1
 
+#define numVBOs 2
+#define numVAOs 1
+
+// for window
+int height = 1080;
+int width = 1920;
+GLuint vao[numVAOs];
+GLuint vbo[numVBOs];
+GLuint particleRenderingProgram, objectRenderingProgram;
+float particleOffsetX, particleOffsetY;
+
 struct Particle {
     float x, y;
     float vx, vy;
     float ax, ay;
+};
+
+struct Line {
+    float x, y;
+    float dx, dy;
 };
 
 struct Object {
@@ -32,14 +48,9 @@ struct Object {
     float x, y;
 };
 
-struct Line {
-    float x, y;
-    float dx, dy;
-};
-
-
-Particle particles[numParticlesX + numParticlesY];
+Particle particles[numParticlesX * numParticlesY];
 Object objects[numObjects];
+glm::mat4 objectTransform;
 
 Object load2dObject(const char *filePath) {
 
@@ -90,16 +101,115 @@ void printObject(Object object) {
     }
 }
 
+void createParticles(void) {
+    for (int i = 0; i < numParticlesX; i++) {
+        for (int j = 0; j < numParticlesY; j++) {
+            particles[i + j * numParticlesX].x = 
+                -((float)i / (float)numParticlesX) - (1 / ((float)numParticlesX * 2));
+            particles[i + j * numParticlesX].y = 
+                ((float)j - ((float)numParticlesY / 2.0f)) * 2.0f / (float)numParticlesY + (1 / ((float)numParticlesY));
+            particles[i + j * numParticlesX].vx = 0;
+            particles[i + j * numParticlesX].vy = 0;
+            particles[i + j * numParticlesX].ax = 0;
+            particles[i + j * numParticlesX].ay = 0;
+        }
+    }
+}
+
+void setupScene(void) {
+
+    vector<float> particlePoints;
+    vector<float> objectLines;
+
+    for (int i = 0; i < numParticlesX * numParticlesY; i++) {
+        particlePoints.push_back(particles[i].x);
+        particlePoints.push_back(particles[i].y);
+    }
+
+    for (int i = 0; i < objects[0].vertices->size(); i++) {
+        objectLines.push_back(objects[0].vertices->at(i).x);
+        objectLines.push_back(objects[0].vertices->at(i).y);
+    }
+
+    glGenVertexArrays(numVAOs, vao);
+    glBindVertexArray(vao[0]);
+    glGenBuffers(numVBOs, vbo);
+    
+    // Particles VBO
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, particlePoints.size() * sizeof(float), &particlePoints[0], GL_STATIC_DRAW);
+
+    // Objects VBO
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, objectLines.size() * sizeof(float), &objectLines[0], GL_STATIC_DRAW);
+}
+
+void display(GLFWwindow *window, double currentTime) {
+    glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glfwGetFramebufferSize(window, &width, &height);
+
+    // Draw particles
+    glUseProgram(particleRenderingProgram);
+    glPointSize(3.0f);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
+    glEnableVertexAttribArray(0);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDrawArrays(GL_POINTS, 0, numParticlesX * numParticlesY);
+
+    // Draw object
+    glUseProgram(objectRenderingProgram);
+    glPointSize(5.0f);
+    objectTransform = glm::mat4(1.0f);
+    objectTransform *= glm::translate(objectTransform, glm::vec3(objects[0].x, objects[0].y, 0.0f));
+    objectTransform *= glm::scale(objectTransform, glm::vec3(objects[0].scale, objects[0].scale, 1.0f));
+
+    glUniformMatrix4fv(glGetUniformLocation(objectRenderingProgram, "model"), 1, GL_FALSE, glm::value_ptr(objectTransform));
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
+    glEnableVertexAttribArray(0);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glDrawArrays(GL_LINE_STRIP, 0, objects[0].vertices->size());
+
+    glfwSwapBuffers(window);
+    glfwPollEvents();
+}
+
 void init(void) {
     objects[0] = load2dObject("assets/objects/triangle.2dObj");
+
+    particleOffsetX = width / (2 * numParticlesX);  // particles start at the left side of the scene
+    particleOffsetY = height / numParticlesY;       // particles fill entire y axis of scene
+
+    particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
+    objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
+
+    createParticles();
+
+    setupScene();
 }
 
 int main(void) {
-
+    if (!glfwInit()) { 
+        exit(EXIT_FAILURE); 
+    }
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    GLFWwindow* window = glfwCreateWindow(width, height, "2dAeroSim", NULL, NULL);
+    glfwMakeContextCurrent(window);
+    if (glewInit() != GLEW_OK) { 
+        exit(EXIT_FAILURE); 
+    }
+    glfwSwapInterval(1);
     init();
-
-    printObject(objects[0]);
-
+    while (!glfwWindowShouldClose(window)) {
+        display(window, glfwGetTime());
+    }
+    glfwDestroyWindow(window);
+    glfwTerminate();
     exit(EXIT_SUCCESS);
-
 }
