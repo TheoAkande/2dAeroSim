@@ -2,8 +2,7 @@
 
 layout(location = 0) in vec2 vertexPosition;
 
-uniform mat4 projection;
-uniform mat4 model;
+uniform float sf;
 
 out vec4 colour;
 

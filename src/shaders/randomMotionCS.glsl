@@ -25,7 +25,7 @@ struct Line {
 };
 
 bool almostEqual(float a, float b) {
-    float epsilon = 0.00001;
+    float epsilon = 0.000001;
     return abs(a - b) <= epsilon;
 }
 

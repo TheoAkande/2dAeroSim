@@ -20,6 +20,8 @@ using namespace std;
 #define vMax 0.1f
 #define numParticleFloats 7
 
+#define scaleFactor 1080.0f
+
 #define numObjects 1
 
 #define numVBOs 2
@@ -36,7 +38,7 @@ GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
 // for compute shader
-GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc;
+GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, sfLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -91,7 +93,7 @@ Object load2dObject(const char *filePath) {
         if (line.c_str()[0] == 'v') {
             glm::vec2 vertex;
             sscanf(line.c_str(), "v %f %f", &vertex.x, &vertex.y);
-            vertices->push_back(vertex);
+            vertices->push_back(glm::vec2(vertex.x * scaleFactor, vertex.y * scaleFactor));
             nv++;
         } else if (line.c_str()[0] == 'm') {
             sscanf(line.c_str(), "m %f", &newObject.mass);
@@ -131,9 +133,9 @@ void createParticles(void) {
     for (int i = 0; i < numParticlesX; i++) {
         for (int j = 0; j < numParticlesY; j++) {
             particles[i + j * numParticlesX].x = 
-                -((float)i / (float)numParticlesX) - (1 / ((float)numParticlesX * 2));
+                (-((float)i / (float)numParticlesX) - (1 / ((float)numParticlesX * 2))) * scaleFactor;
             particles[i + j * numParticlesX].y = 
-                ((float)j - ((float)numParticlesY / 2.0f)) * 2.0f / (float)numParticlesY + (1 / ((float)numParticlesY));
+                (((float)j - ((float)numParticlesY / 2.0f)) * 2.0f / (float)numParticlesY + (1 / ((float)numParticlesY))) * scaleFactor;
             particles[i + j * numParticlesX].vx = 0;
             particles[i + j * numParticlesX].vy = 0;
             particles[i + j * numParticlesX].ax = 0;
@@ -217,6 +219,9 @@ void display(GLFWwindow *window) {
     glPointSize(3.0f);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 
+    sfLoc = glGetUniformLocation(particleRenderingProgram, "sf");
+    glUniform1f(sfLoc, scaleFactor);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
@@ -227,8 +232,11 @@ void display(GLFWwindow *window) {
     // Draw object
     glUseProgram(objectRenderingProgram);
     glPointSize(5.0f);
-
     glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+
+    sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
+    glUniform1f(sfLoc, scaleFactor);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
     glEnableVertexAttribArray(0);
     glEnable(GL_DEPTH_TEST);
