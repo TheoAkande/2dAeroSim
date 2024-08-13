@@ -219,29 +219,27 @@ void main()
     Point p4 = Point(newX, newY);
     Line path = Line(p3, p4);
     // Check for collisions with edges
-    for (int i = 0; i < numEdges; i++) {
-        Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
-        Point p2 = Point(edgeVals[i * 6 + 2], edgeVals[i * 6 + 3]);
-        Line edge = Line(p1, p2);
-        Point ip = intersectPoint(path, edge);
-        Point ordered = order(curX, newX);
-        if (ordered.x <= ip.x && ordered.y >= ip.x) {   // Intersect with line
-            vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
-            vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
-            vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
-            vec2 accelVec = vec2(inVals[thisIndex * numFloats + 4], inVals[thisIndex * numFloats + 5]);
-            vec2 reflectedAccel = reflect(accelVec, normalize(edgeVec));
+    // for (int i = 0; i < numEdges; i++) {
+    //     Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
+    //     Point p2 = Point(edgeVals[i * 6 + 2], edgeVals[i * 6 + 3]);
+    //     Line edge = Line(p1, p2);
+    //     Point ip = intersectPoint(path, edge);
+    //     Point orderedX = order(curX, newX);
+    //     if (orderedX.x <= ip.x && orderedX.y >= ip.x) { // Intersect with line
+    //         vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
+    //         vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
+    //         vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
+    //         vec2 accelVec = vec2(inVals[thisIndex * numFloats + 4], inVals[thisIndex * numFloats + 5]);
+    //         vec2 reflectedAccel = reflect(accelVec, normalize(edgeVec));
 
-            newX = curX + reflectedVel.x * dt;
-            newY = curY + reflectedVel.y * dt;
-            newX = 100000.0;
-            newY = 100000.0;
-            newVX = reflectedVel.x;
-            newVY = reflectedVel.y;
-            newAX = reflectedAccel.x;
-            newAY = reflectedAccel.y;
-        }
-    }
+    //         newX = curX + reflectedVel.x * dt;
+    //         newY = curY + reflectedVel.y * dt;
+    //         newVX = reflectedVel.x;
+    //         newVY = reflectedVel.y;
+    //         newAX = reflectedAccel.x;
+    //         newAY = reflectedAccel.y;
+    //     }
+    // }
 
     outVals[thisIndex * numFloats] = newX;   
     outVals[thisIndex * numFloats + 1] = newY;   

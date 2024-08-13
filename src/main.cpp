@@ -17,7 +17,8 @@ using namespace std;
 #define numParticlesY 50
 #define particleMass 1.0f
 #define rangeOfMotion 0.0f
-#define vMax 10000.0f
+#define vMax 500.0f
+#define totalVMaxSquare vMax
 #define numParticleFloats 7
 #define force 10000.0f
 
@@ -39,7 +40,7 @@ GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
 // for compute shader
-GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, sfLoc;
+GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, sfLoc, tvmsLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -220,12 +221,18 @@ void display(GLFWwindow *window) {
     glUseProgram(particleRenderingProgram);
     glPointSize(3.0f);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
 
     sfLoc = glGetUniformLocation(particleRenderingProgram, "sf");
     glUniform1f(sfLoc, scaleFactor);
 
+    tvmsLoc = glGetUniformLocation(particleRenderingProgram, "totalVMax");
+    glUniform1f(tvmsLoc, vMax);
+
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)(2 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);

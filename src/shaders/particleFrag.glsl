@@ -1,11 +1,12 @@
 #version 430
 
-layout(location = 0) in vec2 vertexPosition;
+in vec2 vertexSpeed;
 
 uniform float sf;
+uniform float totalVMax;
 
 out vec4 colour;
 
 void main() {
-    colour = vec4(0.0, 1.0, 0.0, 1.0);
+    colour = vec4(vertexSpeed.x / totalVMax, vertexSpeed.y / totalVMax, 0.5, 1.0);
 }
