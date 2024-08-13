@@ -16,9 +16,10 @@ using namespace std;
 #define numParticlesX 50
 #define numParticlesY 50
 #define particleMass 1.0f
-#define rangeOfMotion 0.5f
-#define vMax 0.1f
+#define rangeOfMotion 0.0f
+#define vMax 10000.0f
 #define numParticleFloats 7
+#define force 10000.0f
 
 #define scaleFactor 1080.0f
 
@@ -70,7 +71,6 @@ struct Object {
 
 Particle particles[numParticlesX * numParticlesY];
 Object objects[numObjects];
-glm::mat4 objectTransform;
 
 Object load2dObject(const char *filePath) {
 
@@ -204,9 +204,11 @@ void setupComputeBuffers(void) {
         objectEdges.push_back(objects[0].edges->at(i).y1);
         objectEdges.push_back(objects[0].edges->at(i).x2);
         objectEdges.push_back(objects[0].edges->at(i).y2);
+        objectEdges.push_back(objects[0].edges->at(i).nx);
+        objectEdges.push_back(objects[0].edges->at(i).ny);
     }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[2]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, objects[0].numEdges * 4 * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, objects[0].numEdges * 6 * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
 
 void display(GLFWwindow *window) {
@@ -303,16 +305,16 @@ void runFrame(GLFWwindow *window, double currentTime) {
     xForce = 0.0f;
     yForce = 0.0f;
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        xForce = -0.1f;
+        xForce = -force;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        xForce = 0.1f;
+        xForce = force;
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        yForce = 0.1f;
+        yForce = force;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        yForce = -0.1f;
+        yForce = -force;
     }
 }
 
