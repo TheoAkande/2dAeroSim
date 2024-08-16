@@ -25,6 +25,7 @@ using namespace std;
 #define scaleFactor 1080.0f
 #define numChunksX 20
 #define numChunksY 20
+#define ppt scaleFactor / 1000.0f
 
 #define numObjects 1
 
@@ -43,7 +44,8 @@ GLuint vbo[numVBOs];
 
 // for compute shader
 GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, 
-        sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc;
+        sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc,
+        pptLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -230,7 +232,7 @@ void bindComputeBuffers(void) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * numParticleFloats * sizeof(float), NULL, GL_STATIC_READ);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[3]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * sizeof(float), &chunks.chunks[0], GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * sizeof(int), &chunks.chunks[0], GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[4]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numChunksX * numChunksY * sizeof(int), &chunks.cumChunkSizes[0], GL_STATIC_DRAW);
 }
@@ -311,7 +313,7 @@ void display(GLFWwindow *window) {
 }
 
 void init(void) {
-    objects[0] = load2dObject("assets/objects/triangle.2dObj");
+    objects[0] = load2dObject("assets/objects/inverted.2dObj");
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
@@ -357,6 +359,8 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1i(numChunksYLoc, numChunksY);
     sfLoc = glGetUniformLocation(computeProgram, "sf");
     glUniform1f(sfLoc, scaleFactor);
+    pptLoc = glGetUniformLocation(computeProgram, "particleProximityThreshold");
+    glUniform1f(pptLoc, ppt);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);

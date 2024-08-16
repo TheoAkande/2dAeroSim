@@ -5,7 +5,7 @@ layout (local_size_x = 1) in; // sets the number of invocations per work group t
 layout (binding = 0) buffer inputBuffer { float inVals[]; };
 layout (binding = 1) buffer outputBuffer { float outVals[]; };
 layout (binding = 2) buffer edgeBuffer { float edgeVals[]; };
-layout (binding = 3) buffer chunkBuffer { float chunkVals[]; };
+layout (binding = 3) buffer chunkBuffer { int chunkVals[]; };
 layout (binding = 4) buffer chunkSizesBuffer { int chunkSizes[]; };
 
 uniform float rangeOfMotion;
@@ -20,6 +20,7 @@ uniform int numChunksY;
 uniform float chunkWidth;
 uniform float chunkHeight;
 uniform float sf;
+uniform float particleProximityThreshold;
 
 struct Point {
     float x;
@@ -116,6 +117,23 @@ void main()
     float newVY;
     float newAX;
     float newAY;
+
+    // Check if particle collides with any other particles
+    float particleForceX = 0.0;
+    float particleForceY = 0.0;
+    int chunk = int(inVals[thisIndex * numFloats + 7]);
+    int particlesInChunk = chunkSizes[chunk];
+    for (int i = 0; i < particlesInChunk; i++) {
+        if (uint(i) == thisIndex) {
+            continue;
+        }
+        float otherX = inVals[chunkVals[chunk] * numFloats];
+        float otherY = inVals[chunkVals[chunk] * numFloats + 1];
+
+        // if (abs(curX - otherX) < particleProximityThreshold && abs(curY - otherY) < particleProximityThreshold) {
+            
+        // }
+    }
 
     if (abs(inVals[thisIndex * numFloats + 2]) >= vMax) {
         float xSign = inVals[thisIndex * numFloats + 2] > 0.0 ? 1.0 : -1.0;
