@@ -51,7 +51,6 @@ float *curOutBuffer;
 float buffer1[numParticlesX * numParticlesY * numParticleFloats];
 float buffer2[numParticlesX * numParticlesY * numParticleFloats];
 float xForce, yForce = 0.0f;
-float adjustedChunkWidth, adjustedChunkHeight;
 
 struct Particle {
     float x, y;
@@ -87,10 +86,8 @@ Chunks chunks = Chunks();
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
-    chunks.chunkWidth = (float)width / (float)numChunksX;
-    chunks.chunkHeight = (float)height / (float)numChunksY;
-    adjustedChunkWidth = chunks.chunkWidth * scaleFactor;
-    adjustedChunkHeight = chunks.chunkHeight * scaleFactor;
+    chunks.chunkWidth = (float)(2 * scaleFactor) / (float)numChunksX;
+    chunks.chunkHeight = (float)(2 * scaleFactor) / (float)numChunksY;
     for (int i = 0; i < numChunksX; i++) {
         for (int j = 0; j < numChunksY; j++) {
             chunks.chunks[i + j * numChunksX] = new vector<int>();
@@ -171,8 +168,8 @@ void createParticles(void) {
             particles[i + j * numParticlesX].ay = 0;
             particles[i + j * numParticlesX].seed = rand();
             particles[i + j * numParticlesX].chunk = 
-                (int)(particles[i + j * numParticlesX].x / chunks.chunkWidth) + 
-                (int)(particles[i + j * numParticlesX].y / chunks.chunkHeight) * numChunksX;
+                (int)((particles[i + j * numParticlesX].x + scaleFactor) / chunks.chunkWidth) + 
+                (int)((particles[i + j * numParticlesX].y + scaleFactor) / chunks.chunkHeight) * numChunksX;
         }
     }
 }
@@ -266,6 +263,8 @@ void display(GLFWwindow *window) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
+    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)(7 * sizeof(float)));
+    glEnableVertexAttribArray(2);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -327,13 +326,15 @@ void runFrame(GLFWwindow *window, double currentTime) {
     numEdgesLoc = glGetUniformLocation(computeProgram, "numEdges");
     glUniform1i(numEdgesLoc, objects[0].numEdges);
     chunkWdithLoc = glGetUniformLocation(computeProgram, "chunkWidth");
-    glUniform1f(chunkWdithLoc, adjustedChunkWidth);
+    glUniform1f(chunkWdithLoc, chunks.chunkWidth);
     chunkHeightLoc = glGetUniformLocation(computeProgram, "chunkHeight");
-    glUniform1f(chunkHeightLoc, adjustedChunkHeight);
+    glUniform1f(chunkHeightLoc, chunks.chunkHeight);
     numChunksXLoc = glGetUniformLocation(computeProgram, "numChunksX");
     glUniform1i(numChunksXLoc, numChunksX);
     numChunksYLoc = glGetUniformLocation(computeProgram, "numChunksY");
     glUniform1i(numChunksYLoc, numChunksY);
+    sfLoc = glGetUniformLocation(computeProgram, "sf");
+    glUniform1f(sfLoc, scaleFactor);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);

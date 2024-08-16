@@ -17,6 +17,7 @@ uniform int numChunksX;
 uniform int numChunksY;
 uniform float chunkWidth;
 uniform float chunkHeight;
+uniform float sf;
 
 struct Point {
     float x;
@@ -167,8 +168,8 @@ void main()
     }
 
     // Check new chunk position
-    int chunkX = int(newX / chunkWidth);
-    int chunkY = int(newY / chunkHeight);
+    int chunkX = int((newX + sf) / chunkWidth);
+    int chunkY = int((newY + sf) / chunkHeight);
     float chunkIndex = float(chunkY * numChunksX + chunkX);
 
     outVals[thisIndex * numFloats] = newX;   
@@ -177,5 +178,6 @@ void main()
     outVals[thisIndex * numFloats + 3] = newVY;
     outVals[thisIndex * numFloats + 4] = newAX;
     outVals[thisIndex * numFloats + 5] = newAY;  
-    outVals[thisIndex * numFloats + 7] = chunkIndex;                                                                                 
+    outVals[thisIndex * numFloats + 7] = chunkIndex;  
+    // outVals[thisIndex * numFloats + 7] = inVals[thisIndex * numFloats + 7];                                                                              
 }
