@@ -13,7 +13,7 @@ out vec4 colourOut;
 
 void main() {
 
-    vec4 colors[5];  // Define an array of vec4 with 5 elements
+    vec4 colors[6];  // Define an array of vec4 with 5 elements
 
     // Assign distinct colors to each element
     colors[0] = vec4(1.0, 0.0, 0.0, 1.0);  // Red
@@ -21,8 +21,9 @@ void main() {
     colors[2] = vec4(0.0, 0.0, 1.0, 1.0);  // Blue
     colors[3] = vec4(1.0, 1.0, 0.0, 1.0);  // Yellow
     colors[4] = vec4(1.0, 0.0, 1.0, 1.0);  // Magenta
+    colors[5] = vec4(0.0, 1.0, 1.0, 1.0);  // Cyan
 
-    colourOut = colors[int(chunk) % 4];
+    colourOut = colors[int(chunk) % 6];
 
     vertexSpeed = vec2(vertexSpeedIn.x, vertexSpeedIn.y);
     gl_Position = vec4(vertexPosition.x / sf, vertexPosition.y / sf, 0.0, 1.0);

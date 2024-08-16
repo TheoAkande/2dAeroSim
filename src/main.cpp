@@ -23,8 +23,8 @@ using namespace std;
 #define force 10000.0f
 
 #define scaleFactor 1080.0f
-#define numChunksX 10
-#define numChunksY 10
+#define numChunksX 20
+#define numChunksY 20
 
 #define numObjects 1
 
@@ -75,8 +75,10 @@ struct Object {
 };
 
 struct Chunks {
-    vector<int> *chunks[numChunksX * numChunksY];
+    int chunks[numParticlesX * numParticlesY];
+    int cumChunkSizes[numChunksX * numChunksY];
     int chunkSizes[numChunksX * numChunksY];
+    int chunksCounter[numChunksX * numChunksY];
     float chunkWidth, chunkHeight;
 };
 
@@ -88,10 +90,26 @@ Chunks chunks = Chunks();
 void setupChunks(void) {
     chunks.chunkWidth = (float)(2 * scaleFactor) / (float)numChunksX;
     chunks.chunkHeight = (float)(2 * scaleFactor) / (float)numChunksY;
-    for (int i = 0; i < numChunksX; i++) {
-        for (int j = 0; j < numChunksY; j++) {
-            chunks.chunks[i + j * numChunksX] = new vector<int>();
-            chunks.chunkSizes[i + j * numChunksX] = 0;
+}
+
+void updateChunkData(float particle_buffer[]) {
+    for (int i = 0; i < numChunksX * numChunksY; i++) {
+        chunks.chunkSizes[i] = 0;
+        chunks.chunksCounter[i] = 0;
+    }
+    for (int i = 0; i < numParticlesX * numParticlesY; i++) {
+        int chunk = particle_buffer[i * numParticleFloats + 7];
+        if (chunk >= 0 && chunk < numChunksX * numChunksY) chunks.chunkSizes[chunk]++;
+    }
+    chunks.cumChunkSizes[0] = 0;
+    for (int i = 1; i < numChunksX * numChunksY; i++) {
+        chunks.cumChunkSizes[i] = chunks.chunkSizes[i - 1] + chunks.cumChunkSizes[i - 1];
+    }
+    for (int i = 0; i < numParticlesX * numParticlesY; i++) {
+        int chunk = particle_buffer[i * numParticleFloats + 7];
+        if (chunk >= 0 && chunk < numChunksX * numChunksY) {
+            chunks.chunks[chunks.cumChunkSizes[chunk] + chunks.chunksCounter[chunk]] = i;
+            chunks.chunksCounter[chunk]++;
         }
     }
 }
@@ -344,13 +362,15 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);
 
-    bindComputeBuffers();
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
+    updateChunkData(curOutBuffer);
 
     float *temp = curOutBuffer;
     curOutBuffer = curInBuffer;
     curInBuffer = temp;
+
+    bindComputeBuffers();
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), curInBuffer, GL_STATIC_DRAW);
 
     xForce = 0.0f;
     yForce = 0.0f;
