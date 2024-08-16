@@ -5,6 +5,8 @@ layout (local_size_x = 1) in; // sets the number of invocations per work group t
 layout (binding = 0) buffer inputBuffer { float inVals[]; };
 layout (binding = 1) buffer outputBuffer { float outVals[]; };
 layout (binding = 2) buffer edgeBuffer { float edgeVals[]; };
+layout (binding = 3) buffer chunkBuffer { float chunkVals[]; };
+layout (binding = 4) buffer chunkSizesBuffer { int chunkSizes[]; };
 
 uniform float rangeOfMotion;
 uniform float vMax;

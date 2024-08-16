@@ -30,7 +30,7 @@ using namespace std;
 
 #define numVBOs 2
 #define numVAOs 1
-#define numCBs 3
+#define numCBs 5
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
@@ -229,6 +229,10 @@ void bindComputeBuffers(void) {
     glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * numParticleFloats * sizeof(float), curInBuffer, GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * numParticleFloats * sizeof(float), NULL, GL_STATIC_READ);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[3]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * sizeof(float), &chunks.chunks[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[4]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numChunksX * numChunksY * sizeof(int), &chunks.cumChunkSizes[0], GL_STATIC_DRAW);
 }
 
 void setupComputeBuffers(void) {
@@ -357,6 +361,8 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, computeBuffers[2]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, computeBuffers[3]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, computeBuffers[4]);
     glDispatchCompute(numParticlesX * numParticlesY, 1, 1); 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
