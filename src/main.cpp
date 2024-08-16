@@ -13,16 +13,18 @@
 
 using namespace std;
 
-#define numParticlesX 50
-#define numParticlesY 50
+#define numParticlesX 100
+#define numParticlesY 100
 #define particleMass 1.0f
-#define rangeOfMotion 5.0f
+#define rangeOfMotion 500.0f
 #define vMax 500.0f
 #define totalVMaxSquare vMax
-#define numParticleFloats 7
+#define numParticleFloats 8
 #define force 10000.0f
 
 #define scaleFactor 1080.0f
+#define numChunksX 10
+#define numChunksY 10
 
 #define numObjects 1
 
@@ -40,7 +42,8 @@ GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
 // for compute shader
-GLuint floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, sfLoc, tvmsLoc;
+GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, 
+        sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -48,12 +51,14 @@ float *curOutBuffer;
 float buffer1[numParticlesX * numParticlesY * numParticleFloats];
 float buffer2[numParticlesX * numParticlesY * numParticleFloats];
 float xForce, yForce = 0.0f;
+float adjustedChunkWidth, adjustedChunkHeight;
 
 struct Particle {
     float x, y;
     float vx, vy;
     float ax, ay;
     GLuint seed;
+    int chunk;
 };
 
 struct Line {
@@ -70,8 +75,29 @@ struct Object {
     int numEdges;
 };
 
+struct Chunks {
+    vector<int> *chunks[numChunksX * numChunksY];
+    int chunkSizes[numChunksX * numChunksY];
+    float chunkWidth, chunkHeight;
+};
+
 Particle particles[numParticlesX * numParticlesY];
 Object objects[numObjects];
+Chunks chunks = Chunks();
+
+// Create the chunk indicators that will be used to determine which particles are in which chunks
+void setupChunks(void) {
+    chunks.chunkWidth = (float)width / (float)numChunksX;
+    chunks.chunkHeight = (float)height / (float)numChunksY;
+    adjustedChunkWidth = chunks.chunkWidth * scaleFactor;
+    adjustedChunkHeight = chunks.chunkHeight * scaleFactor;
+    for (int i = 0; i < numChunksX; i++) {
+        for (int j = 0; j < numChunksY; j++) {
+            chunks.chunks[i + j * numChunksX] = new vector<int>();
+            chunks.chunkSizes[i + j * numChunksX] = 0;
+        }
+    }
+}
 
 Object load2dObject(const char *filePath) {
 
@@ -131,6 +157,8 @@ void printObject(Object object) {
 }
 
 void createParticles(void) {
+    setupChunks();
+
     for (int i = 0; i < numParticlesX; i++) {
         for (int j = 0; j < numParticlesY; j++) {
             particles[i + j * numParticlesX].x = 
@@ -142,6 +170,9 @@ void createParticles(void) {
             particles[i + j * numParticlesX].ax = 0;
             particles[i + j * numParticlesX].ay = 0;
             particles[i + j * numParticlesX].seed = rand();
+            particles[i + j * numParticlesX].chunk = 
+                (int)(particles[i + j * numParticlesX].x / chunks.chunkWidth) + 
+                (int)(particles[i + j * numParticlesX].y / chunks.chunkHeight) * numChunksX;
         }
     }
 }
@@ -157,6 +188,7 @@ void setupScene(void) {
         curInBuffer[i * numParticleFloats + 4] = particles[i].ax;
         curInBuffer[i * numParticleFloats + 5] = particles[i].ay;
         curInBuffer[i * numParticleFloats + 6] = particles[i].seed;
+        curInBuffer[i * numParticleFloats + 7] = static_cast<float>(particles[i].chunk);
     }
 
     for (int i = 0; i < objects[0].vertices->size(); i++) {
@@ -193,6 +225,7 @@ void setupComputeBuffers(void) {
         curInBuffer[i * numParticleFloats + 4] = particles[i].ax;
         curInBuffer[i * numParticleFloats + 5] = particles[i].ay;
         curInBuffer[i * numParticleFloats + 6] = particles[i].seed;
+        curInBuffer[i * numParticleFloats + 7] = static_cast<float>(particles[i].chunk);
     }
 
     glGenBuffers(numCBs, computeBuffers);
@@ -293,6 +326,14 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(yForceLoc, yForce);
     numEdgesLoc = glGetUniformLocation(computeProgram, "numEdges");
     glUniform1i(numEdgesLoc, objects[0].numEdges);
+    chunkWdithLoc = glGetUniformLocation(computeProgram, "chunkWidth");
+    glUniform1f(chunkWdithLoc, adjustedChunkWidth);
+    chunkHeightLoc = glGetUniformLocation(computeProgram, "chunkHeight");
+    glUniform1f(chunkHeightLoc, adjustedChunkHeight);
+    numChunksXLoc = glGetUniformLocation(computeProgram, "numChunksX");
+    glUniform1i(numChunksXLoc, numChunksX);
+    numChunksYLoc = glGetUniformLocation(computeProgram, "numChunksY");
+    glUniform1i(numChunksYLoc, numChunksY);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);

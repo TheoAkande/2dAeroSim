@@ -13,6 +13,10 @@ uniform float dt;
 uniform float xForce;
 uniform float yForce;
 uniform int numEdges;
+uniform int numChunksX;
+uniform int numChunksY;
+uniform float chunkWidth;
+uniform float chunkHeight;
 
 struct Point {
     float x;
@@ -162,10 +166,16 @@ void main()
         }
     }
 
+    // Check new chunk position
+    int chunkX = int(newX / chunkWidth);
+    int chunkY = int(newY / chunkHeight);
+    float chunkIndex = float(chunkY * numChunksX + chunkX);
+
     outVals[thisIndex * numFloats] = newX;   
     outVals[thisIndex * numFloats + 1] = newY;   
     outVals[thisIndex * numFloats + 2] = newVX;
     outVals[thisIndex * numFloats + 3] = newVY;
     outVals[thisIndex * numFloats + 4] = newAX;
-    outVals[thisIndex * numFloats + 5] = newAY;                                                                                   
+    outVals[thisIndex * numFloats + 5] = newAY;  
+    outVals[thisIndex * numFloats + 7] = chunkIndex;                                                                                 
 }
