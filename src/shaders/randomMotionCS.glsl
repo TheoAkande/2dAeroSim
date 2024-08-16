@@ -155,19 +155,10 @@ void main()
             vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
             vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
             vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
-            vec2 accelVec = vec2(inVals[thisIndex * numFloats + 4], inVals[thisIndex * numFloats + 5]);
-            vec2 reflectedAccel = reflect(accelVec, normalize(edgeVec));
-
-            newX = curX + reflectedVel.x * dt;
-            newY = curY + reflectedVel.y * dt;
-
-            newX = 10000;
-            newY = 10000;
-
+            newX = curX;
+            newY = curY; 
             newVX = reflectedVel.x;
             newVY = reflectedVel.y;
-            newAX = reflectedAccel.x;
-            newAY = reflectedAccel.y;
         }
     }
 

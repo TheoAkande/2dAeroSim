@@ -16,7 +16,7 @@ using namespace std;
 #define numParticlesX 50
 #define numParticlesY 50
 #define particleMass 1.0f
-#define rangeOfMotion 0.0f
+#define rangeOfMotion 5.0f
 #define vMax 500.0f
 #define totalVMaxSquare vMax
 #define numParticleFloats 7
