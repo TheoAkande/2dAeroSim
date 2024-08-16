@@ -296,6 +296,7 @@ void runFrame(GLFWwindow *window, double currentTime) {
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, computeBuffers[2]);
     glDispatchCompute(numParticlesX * numParticlesY, 1, 1); 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);

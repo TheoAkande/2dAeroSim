@@ -29,10 +29,22 @@ bool almostEqual(float a, float b) {
     return abs(a - b) <= epsilon;
 }
 
+float fmax(float a, float b) {
+    return a > b ? a : b;
+}
+
+float fmin(float a, float b) {
+    return a < b ? a : b;
+}
+
 int orientation(Point p, Point q, Point r) {
     float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
     if (almostEqual(val, 0.0)) return 0;
     return (val > 0) ? 1 : 2;
+}
+
+bool on_segment(Point p, Point q, Point r) {
+    return q.x <= fmax(p.x, r.x) && q.x >= fmin(p.x, r.x) && q.y <= fmax(p.y, r.y) && q.y >= fmin(p.y, r.y);
 }
 
 Point order(float n1, float n2) {
@@ -43,118 +55,34 @@ Point order(float n1, float n2) {
     }
 }
 
-// Pass point path then object line
-Point intersectPoint(Line l1, Line l2) {
+// Check if bounding boxes of line and particle intersect
+bool boundingIntersect(Line l1, Line l2) {
+    Point ordered_1 = order(l1.p1.x, l1.p2.x);
+    Point ordered_2 = order(l2.p1.x, l2.p2.x);
+    Point ordered_3 = order(l1.p1.y, l1.p2.y);
+    Point ordered_4 = order(l2.p1.y, l2.p2.y);
 
-    float dx1 = l1.p2.x - l1.p1.x;
-    float dx2 = l2.p2.x - l2.p1.x;
-
-    if (dx1 == 0 && dx2 == 0) {
-        Point ordered_1 = order(l1.p1.y, l1.p2.y);
-        Point ordered_2 = order(l2.p1.y, l2.p2.y);
-
-        if (ordered_1.y < ordered_2.x || ordered_1.x > ordered_2.y) {   // not intersect
-            return Point(l1.p1.x + 5.0, 0.0);
-        } else {
-            return l1.p2;
-        }
-    }
-
-    if (dx1 == 0) {
-        Point ordered_2 = order(l2.p1.y, l2.p2.y);
-
-        if (ordered_2.x <= l1.p1.x && ordered_2.y >= l1.p1.x) {
-            return Point(l1.p1.x, l1.p2.y);
-        } else {
-            return l2.p1;
-        }
-    }
-
-    if (dx2 == 0) {
-        Point ordered_1 = order(l1.p1.y, l1.p2.y);
-
-        if (ordered_1.x <= l2.p1.x && ordered_1.y >= l2.p1.x) {
-            return Point(l2.p1.x, l1.p2.y);
-        } else {
-            return l2.p1;
-        }
-    }
-
-    float m1 = (l1.p2.y - l1.p1.y) / dx1;
-    float m2 = (l2.p2.y - l2.p1.y) / dx2;
-
-    if (almostEqual(abs(m1), abs(m2))) {    // if collinear
-        Point ordered_1 = order(l1.p1.x, l1.p2.x);
-        Point ordered_2 = order(l2.p1.x, l2.p2.x);
-
-        if (ordered_1.x >= ordered_2.y || ordered_1.y <= ordered_2.x) { // Not intersecting
-            return l2.p1;
-        } else {
-            if (ordered_1.x >= ordered_2.x) {
-                if (ordered_1.x == l1.p1.x) {
-                    return l1.p1;
-                } else {
-                    return l1.p2;
-                }
-            } else if (ordered_1.y <= ordered_2.y) {
-                if (ordered_1.x == l1.p1.x) {
-                    return l1.p1;
-                } else {
-                    return l1.p2;
-                }
-            } else {
-                return Point((l2.p1.x + l2.p2.x) / 2, (l2.p1.y + l2.p2.y) / 2);
-            }
-        }
-    } else {
-        float x1 = l1.p1.x;
-        float y1 = l1.p1.y;
-        float x2 = l2.p1.x;
-        float y2 = l2.p1.y;
-
-        // m1 (x - x1) + y1 = m2 (x - x2) + y2
-        // m1 . x - m2 . x = m1 . x1 - m2 . x2 - y1 + y2
-        float x = (m1 * x1 - m2 * x2 - y1 + y2) / (m1 - m2);
-        float y = m1 * (x - x1) + y1;
-
-        return Point(x, y);
-    }
+    return ordered_1.x <= ordered_2.y && ordered_1.y >= ordered_2.x && ordered_3.x <= ordered_4.y && ordered_3.y >= ordered_4.x;
 }
 
-
 bool intersect(Line l1, Line l2) {
+    if (!boundingIntersect(l1, l2)) {   // easily prune most cases
+        return false;
+    }
     int o1 = orientation(l1.p1, l1.p2, l2.p1);
     int o2 = orientation(l1.p1, l1.p2, l2.p2);
     int o3 = orientation(l2.p1, l2.p2, l1.p1);
     int o4 = orientation(l2.p1, l2.p2, l1.p2);
-    if (!(almostEqual(o1, o2)) && !(almostEqual(o3, o4))) return true;
-    if (almostEqual(o1, 0) && almostEqual(o2, 0) && almostEqual(o3, 0) && almostEqual(o4, 0)) {
-        if (l1.p1.x == l1.p2.x) {
-            if (l1.p1.y > l1.p2.y) {
-                Point temp = l1.p1;
-                l1.p1 = l1.p2;
-                l1.p2 = temp;
-            }
-            if (l2.p1.y > l2.p2.y) {
-                Point temp = l2.p1;
-                l2.p1 = l2.p2;
-                l2.p2 = temp;
-            }
-            return l1.p1.y <= l2.p2.y && l1.p2.y >= l2.p1.y;
-        } else {
-            if (l1.p1.x > l1.p2.x) {
-                Point temp = l1.p1;
-                l1.p1 = l1.p2;
-                l1.p2 = temp;
-            }
-            if (l2.p1.x > l2.p2.x) {
-                Point temp = l2.p1;
-                l2.p1 = l2.p2;
-                l2.p2 = temp;
-            }
-            return l1.p1.x <= l2.p2.x && l1.p2.x >= l2.p1.x;
-        }
+
+    if (o1 != o2 && o3 != o4) {
+        return true;
     }
+
+    if (o1 == 0 && on_segment(l1.p1, l2.p1, l1.p2)) return true;
+    if (o2 == 0 && on_segment(l1.p1, l2.p2, l1.p2)) return true;
+    if (o3 == 0 && on_segment(l2.p1, l1.p1, l2.p2)) return true;
+    if (o4 == 0 && on_segment(l2.p1, l1.p2, l2.p2)) return true;
+
     return false;
 }
 
@@ -219,27 +147,29 @@ void main()
     Point p4 = Point(newX, newY);
     Line path = Line(p3, p4);
     // Check for collisions with edges
-    // for (int i = 0; i < numEdges; i++) {
-    //     Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
-    //     Point p2 = Point(edgeVals[i * 6 + 2], edgeVals[i * 6 + 3]);
-    //     Line edge = Line(p1, p2);
-    //     Point ip = intersectPoint(path, edge);
-    //     Point orderedX = order(curX, newX);
-    //     if (orderedX.x <= ip.x && orderedX.y >= ip.x) { // Intersect with line
-    //         vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
-    //         vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
-    //         vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
-    //         vec2 accelVec = vec2(inVals[thisIndex * numFloats + 4], inVals[thisIndex * numFloats + 5]);
-    //         vec2 reflectedAccel = reflect(accelVec, normalize(edgeVec));
+    for (int i = 0; i < numEdges; i++) {
+        Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
+        Point p2 = Point(edgeVals[i * 6 + 2], edgeVals[i * 6 + 3]);
+        Line edge = Line(p1, p2);
+        if (intersect(path, edge)) { // Intersect with line
+            vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
+            vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
+            vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
+            vec2 accelVec = vec2(inVals[thisIndex * numFloats + 4], inVals[thisIndex * numFloats + 5]);
+            vec2 reflectedAccel = reflect(accelVec, normalize(edgeVec));
 
-    //         newX = curX + reflectedVel.x * dt;
-    //         newY = curY + reflectedVel.y * dt;
-    //         newVX = reflectedVel.x;
-    //         newVY = reflectedVel.y;
-    //         newAX = reflectedAccel.x;
-    //         newAY = reflectedAccel.y;
-    //     }
-    // }
+            newX = curX + reflectedVel.x * dt;
+            newY = curY + reflectedVel.y * dt;
+
+            newX = 10000;
+            newY = 10000;
+
+            newVX = reflectedVel.x;
+            newVY = reflectedVel.y;
+            newAX = reflectedAccel.x;
+            newAY = reflectedAccel.y;
+        }
+    }
 
     outVals[thisIndex * numFloats] = newX;   
     outVals[thisIndex * numFloats + 1] = newY;   
