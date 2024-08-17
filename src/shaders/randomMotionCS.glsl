@@ -7,6 +7,8 @@ layout (binding = 1) buffer outputBuffer { float outVals[]; };
 layout (binding = 2) buffer edgeBuffer { float edgeVals[]; };
 layout (binding = 3) buffer chunkBuffer { int chunkVals[]; };
 layout (binding = 4) buffer chunkSizesBuffer { int chunkSizes[]; };
+layout (binding = 4) buffer cumChunkSizesBuffer { int cumChunkSizes[]; };
+
 
 uniform float rangeOfMotion;
 uniform float vMax;
@@ -21,6 +23,7 @@ uniform float chunkWidth;
 uniform float chunkHeight;
 uniform float sf;
 uniform float particleProximityThreshold;
+uniform float particleForceFactor;
 
 struct Point {
     float x;
@@ -45,6 +48,9 @@ float fmin(float a, float b) {
     return a < b ? a : b;
 }
 
+// 0 -> collinear
+// 1 -> clockwise
+// 2 -> counterclockwise
 int orientation(Point p, Point q, Point r) {
     float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
     if (almostEqual(val, 0.0)) return 0;
@@ -121,42 +127,62 @@ void main()
     // Check if particle collides with any other particles
     float particleForceX = 0.0;
     float particleForceY = 0.0;
+    bool change = false;
     int chunk = int(inVals[thisIndex * numFloats + 7]);
-    int particlesInChunk = chunkSizes[chunk];
-    for (int i = 0; i < particlesInChunk; i++) {
-        if (uint(i) == thisIndex) {
-            continue;
-        }
-        float otherX = inVals[chunkVals[chunk] * numFloats];
-        float otherY = inVals[chunkVals[chunk] * numFloats + 1];
+    if (chunk > 0 && chunk < numChunksX * numChunksY) {
+        int particlesInChunk = chunkSizes[chunk];
+        int chunkOffset = cumChunkSizes[chunk];
+        for (int i = 0; i < particlesInChunk; i++) {
+            if (uint(i) == thisIndex) {
+                continue;
+            }
+            float otherX = inVals[chunkVals[chunkOffset + i] * numFloats];
+            float otherY = inVals[chunkVals[chunkOffset + i] * numFloats + 1];
 
-        // if (abs(curX - otherX) < particleProximityThreshold && abs(curY - otherY) < particleProximityThreshold) {
-            
-        // }
+            if (abs(curX - otherX) < 0.1 && abs(curY - otherY) < 0.1) {
+                change = true;
+                float otherVelX = inVals[chunkVals[chunk] * numFloats + 2];
+                float otherVelY = inVals[chunkVals[chunk] * numFloats + 3];
+                Point other = Point(otherX, otherY);
+                Point otherEnd = Point(otherX + otherVelX, otherY + otherVelY); 
+                Point curPoint = Point(curX, curY);
+                int orien = orientation(other, otherEnd, curPoint);
+                vec2 otherVelNormal = vec2(otherVelY, -otherVelX);
+                if (orien == 1) {
+                    otherVelNormal = -otherVelNormal;
+                }
+                otherVelNormal = normalize(otherVelNormal);
+                vec2 curVel = normalize(vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]));
+                vec2 reflectedVel = reflect(curVel, otherVelNormal);
+                particleForceX += reflectedVel.x;
+                particleForceY += reflectedVel.y;
+            }
+        }
     }
+    
 
     if (abs(inVals[thisIndex * numFloats + 2]) >= vMax) {
         float xSign = inVals[thisIndex * numFloats + 2] > 0.0 ? 1.0 : -1.0;
-        newX = inVals[thisIndex * numFloats] + vMax * xSign * dt;
+        newX = inVals[thisIndex * numFloats] + (vMax * xSign + particleForceX * particleForceFactor) * dt;
         if (abs(inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4]) >= abs(inVals[thisIndex * numFloats + 2])) {
             newVX = vMax * xSign;
         } else {
             newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
         }
     } else {
-        newX = inVals[thisIndex * numFloats] + inVals[thisIndex * numFloats + 2] * dt;
+        newX = inVals[thisIndex * numFloats] + (inVals[thisIndex * numFloats + 2] + particleForceX * particleForceFactor) * dt;
         newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
     }
     if (abs(inVals[thisIndex * numFloats + 3]) >= vMax) {
         float ySign = inVals[thisIndex * numFloats + 3] > 0.0 ? 1.0 : -1.0;
-        newY = inVals[thisIndex * numFloats + 1] + vMax * ySign * dt;
+        newY = inVals[thisIndex * numFloats + 1] + (particleForceY * particleForceFactor + vMax * ySign) * dt;
         if (abs(inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5]) >= abs(inVals[thisIndex * numFloats + 3])) {
             newVY = vMax * ySign;
         } else {
             newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
         }
     } else {
-        newY = inVals[thisIndex * numFloats + 1] + inVals[thisIndex * numFloats + 3] * dt;
+        newY = inVals[thisIndex * numFloats + 1] + (inVals[thisIndex * numFloats + 3] + particleForceY * particleForceFactor) * dt;
         newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
     }
     uint seed = uint(inVals[thisIndex * numFloats + 6]);
@@ -192,12 +218,16 @@ void main()
     int chunkY = int((newY + sf) / chunkHeight);
     float chunkIndex = float(chunkY * numChunksX + chunkX);
 
+    if (change) {
+        newX = 1000000;
+        newY = 1000000;
+    }
+
     outVals[thisIndex * numFloats] = newX;   
     outVals[thisIndex * numFloats + 1] = newY;   
     outVals[thisIndex * numFloats + 2] = newVX;
     outVals[thisIndex * numFloats + 3] = newVY;
     outVals[thisIndex * numFloats + 4] = newAX;
     outVals[thisIndex * numFloats + 5] = newAY;  
-    outVals[thisIndex * numFloats + 7] = chunkIndex;  
-    // outVals[thisIndex * numFloats + 7] = inVals[thisIndex * numFloats + 7];                                                                              
+    outVals[thisIndex * numFloats + 7] = chunkIndex;                                                                            
 }

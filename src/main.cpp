@@ -16,22 +16,23 @@ using namespace std;
 #define numParticlesX 100
 #define numParticlesY 100
 #define particleMass 1.0f
-#define rangeOfMotion 500.0f
+#define rangeOfMotion 0.0f
 #define vMax 500.0f
 #define totalVMaxSquare vMax
 #define numParticleFloats 8
 #define force 10000.0f
+#define particleForceFactor force
 
 #define scaleFactor 1080.0f
 #define numChunksX 20
 #define numChunksY 20
-#define ppt scaleFactor / 1000.0f
+#define ppt 0.1f
 
 #define numObjects 1
 
 #define numVBOs 2
 #define numVAOs 1
-#define numCBs 5
+#define numCBs 6
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
@@ -45,7 +46,7 @@ GLuint vbo[numVBOs];
 // for compute shader
 GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, 
         sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc,
-        pptLoc;
+        pptLoc, pfLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -235,6 +236,8 @@ void bindComputeBuffers(void) {
     glBufferData(GL_SHADER_STORAGE_BUFFER, numParticlesX * numParticlesY * sizeof(int), &chunks.chunks[0], GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[4]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numChunksX * numChunksY * sizeof(int), &chunks.cumChunkSizes[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[5]);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numChunksX * numChunksY * sizeof(int), &chunks.chunkSizes[0], GL_STATIC_DRAW);
 }
 
 void setupComputeBuffers(void) {
@@ -287,8 +290,6 @@ void display(GLFWwindow *window) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)(2 * sizeof(float)));
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)(7 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -361,12 +362,15 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(sfLoc, scaleFactor);
     pptLoc = glGetUniformLocation(computeProgram, "particleProximityThreshold");
     glUniform1f(pptLoc, ppt);
+    pfLoc = glGetUniformLocation(computeProgram, "particleForceFactor");
+    glUniform1f(pfLoc, particleForceFactor);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, computeBuffers[2]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, computeBuffers[3]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, computeBuffers[4]);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, computeBuffers[5]);
     glDispatchCompute(numParticlesX * numParticlesY, 1, 1); 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
