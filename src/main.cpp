@@ -8,15 +8,16 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SOIL2/soil2.h>
+#include <cstdlib>
 
 #include "Utils.h"
 
 using namespace std;
 
-#define numParticlesX 100
-#define numParticlesY 125
+#define numParticlesX 2
+#define numParticlesY 2
 #define particleMass 1.0f
-#define rangeOfMotion 500.0f
+#define rangeOfMotion 0.0f
 #define vMax 500.0f
 #define totalVMaxSquare vMax
 #define numParticleFloats 8
@@ -25,7 +26,7 @@ using namespace std;
 #define scaleFactor 1080.0f
 #define numChunksX 20
 #define numChunksY 20
-#define ppt 1.5f
+#define ppt 300.0f
 
 #define numObjects 1
 
@@ -101,7 +102,11 @@ void updateChunkData(float particle_buffer[]) {
     }
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
         int chunk = particle_buffer[i * numParticleFloats + 7];
-        if (chunk >= 0 && chunk < numChunksX * numChunksY) chunks.chunkSizes[chunk]++;
+        cout << chunk << endl;
+        if (chunk >= 0 && chunk < numChunksX * numChunksY) {
+            chunks.chunkSizes[chunk]++;
+            cout << "eee " << chunks.chunkSizes[chunk] << endl;
+        }
     }
     chunks.cumChunkSizes[0] = 0;
     for (int i = 1; i < numChunksX * numChunksY; i++) {
@@ -275,7 +280,7 @@ void display(GLFWwindow *window) {
 
     // Draw particles
     glUseProgram(particleRenderingProgram);
-    glPointSize(3.0f);
+    glPointSize(30.0f);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
 
@@ -313,7 +318,7 @@ void display(GLFWwindow *window) {
 }
 
 void init(void) {
-    objects[0] = load2dObject("assets/objects/inverted.2dObj");
+    objects[0] = load2dObject("assets/objects/vertLine.2dObj");
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
@@ -374,6 +379,24 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);
 
     updateChunkData(curOutBuffer);
+
+    // system("cls");
+    // cout << "particle 1:" << endl;
+    // cout << "vx: " << curOutBuffer[2] << ", ";
+    // cout << "vy: " << curOutBuffer[3] << ", ";
+    // cout << "chunk: " << curOutBuffer[7] << endl;
+
+    // cout << "particle 2:" << endl;
+    // cout << "vx: " << curOutBuffer[10] << ", ";
+    // cout << "vy: " << curOutBuffer[11] << ", ";
+    // cout << "chunk: " << curOutBuffer[15] << endl;
+    // cout << "----------------" << endl;
+
+    // cout << "Chunk data" << endl;
+    // cout << "Chunk " << curOutBuffer[7] << ": ";
+    // cout << chunks.chunkSizes[(int)(curOutBuffer[7])] << endl;
+    // cout << "Chunk " << curOutBuffer[15] << ": " << chunks.chunkSizes[(int)(curOutBuffer[15])] << endl;
+    // cout << chunks.chunks[0] << " " << chunks.chunks[1] << endl;
 
     float *temp = curOutBuffer;
     curOutBuffer = curInBuffer;

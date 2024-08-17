@@ -6,8 +6,8 @@ layout (binding = 0) buffer inputBuffer { float inVals[]; };
 layout (binding = 1) buffer outputBuffer { float outVals[]; };
 layout (binding = 2) buffer edgeBuffer { float edgeVals[]; };
 layout (binding = 3) buffer chunkBuffer { int chunkVals[]; };
-layout (binding = 4) buffer chunkSizesBuffer { int chunkSizes[]; };
 layout (binding = 4) buffer cumChunkSizesBuffer { int cumChunkSizes[]; };
+layout (binding = 5) buffer chunkSizesBuffer { int chunkSizes[]; };
 
 
 uniform float rangeOfMotion;
@@ -145,7 +145,7 @@ void main()
         int chunkOffset = cumChunkSizes[chunk];
         for (int i = 0; i < particlesInChunk; i++) {
             int otherIndex = chunkVals[chunkOffset + i];
-            if (otherIndex == thisIndex) {
+            if (uint(otherIndex) == thisIndex) {
                 continue;
             }
 
@@ -180,8 +180,10 @@ void main()
             }
         }
 
-        curVelX += particleForceX * dt;
-        curVelY += particleForceY * dt;
+        if (particleForceX != 0 || particleForceY != 0) {
+            curVelX = particleForceX * dt;
+            curVelY = particleForceY * dt;
+        }
 
         newX = curX + clampedVel(curVelX) * dt;
         newY = curY + clampedVel(curVelY) * dt;
