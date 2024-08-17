@@ -133,13 +133,16 @@ void main()
         int particlesInChunk = chunkSizes[chunk];
         int chunkOffset = cumChunkSizes[chunk];
         for (int i = 0; i < particlesInChunk; i++) {
-            if (uint(i) == thisIndex) {
+            
+            int otherIndex = chunkVals[chunkOffset + i];
+            if (otherIndex == thisIndex) {
                 continue;
             }
-            float otherX = inVals[chunkVals[chunkOffset + i] * numFloats];
-            float otherY = inVals[chunkVals[chunkOffset + i] * numFloats + 1];
 
-            if (abs(curX - otherX) < 0.1 && abs(curY - otherY) < 0.1) {
+            float otherX = inVals[otherIndex * numFloats];
+            float otherY = inVals[otherIndex * numFloats + 1];
+
+            if (abs(curX - otherX) < particleProximityThreshold && abs(curY - otherY) < particleProximityThreshold) {
                 change = true;
                 float otherVelX = inVals[chunkVals[chunk] * numFloats + 2];
                 float otherVelY = inVals[chunkVals[chunk] * numFloats + 3];

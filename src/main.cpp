@@ -14,7 +14,7 @@
 using namespace std;
 
 #define numParticlesX 100
-#define numParticlesY 100
+#define numParticlesY 150
 #define particleMass 1.0f
 #define rangeOfMotion 0.0f
 #define vMax 500.0f
@@ -26,7 +26,7 @@ using namespace std;
 #define scaleFactor 1080.0f
 #define numChunksX 20
 #define numChunksY 20
-#define ppt 0.1f
+#define ppt 1.5f
 
 #define numObjects 1
 
