@@ -23,7 +23,6 @@ uniform float chunkWidth;
 uniform float chunkHeight;
 uniform float sf;
 uniform float particleProximityThreshold;
-uniform float particleForceFactor;
 
 struct Point {
     float x;
@@ -166,45 +165,26 @@ void main()
                     otherVelNormal = -otherVelNormal;
                 }
                 otherVelNormal = normalize(otherVelNormal);
-                vec2 curVel = normalize(vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]));
-                vec2 reflectedVel = reflect(curVel, otherVelNormal);
+                vec2 curVel = normalize(vec2(curVelX, curVelY));
+
+
+                float totalMag = (sqrt(curVelX * curVelX + curVelY * curVelY) + sqrt(otherVelX * otherVelX + otherVelY * otherVelY)) / 2.0;
+
+                vec2 reflectedVel = reflect(curVel, otherVelNormal) * totalMag;
+
                 particleForceX += reflectedVel.x;
                 particleForceY += reflectedVel.y;
             }
         }
 
-        curVelX += particleForceX * particleForceFactor * dt;
-        curVelY += particleForceY * particleForceFactor * dt;
+        curVelX += particleForceX * dt;
+        curVelY += particleForceY * dt;
 
         newX = curX + clampedVel(curVelX) * dt;
         newY = curY + clampedVel(curVelY) * dt;
         newVX = clampedVel(curVelX + inVals[thisIndex * numFloats + 4] * dt);
         newVY = clampedVel(curVelY + inVals[thisIndex * numFloats + 5] * dt);
 
-        // if (abs(inVals[thisIndex * numFloats + 2]) >= vMax) {
-        //     float xSign = inVals[thisIndex * numFloats + 2] > 0.0 ? 1.0 : -1.0;
-        //     newX = inVals[thisIndex * numFloats] + (vMax * xSign + particleForceX * particleForceFactor) * dt;
-        //     if (abs(inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4]) >= abs(inVals[thisIndex * numFloats + 2])) {
-        //         newVX = vMax * xSign;
-        //     } else {
-        //         newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
-        //     }
-        // } else {
-        //     newX = inVals[thisIndex * numFloats] + (inVals[thisIndex * numFloats + 2] + particleForceX * particleForceFactor) * dt;
-        //     newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
-        // }
-        // if (abs(inVals[thisIndex * numFloats + 3]) >= vMax) {
-        //     float ySign = inVals[thisIndex * numFloats + 3] > 0.0 ? 1.0 : -1.0;
-        //     newY = inVals[thisIndex * numFloats + 1] + (particleForceY * particleForceFactor + vMax * ySign) * dt;
-        //     if (abs(inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5]) >= abs(inVals[thisIndex * numFloats + 3])) {
-        //         newVY = vMax * ySign;
-        //     } else {
-        //         newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
-        //     }
-        // } else {
-        //     newY = inVals[thisIndex * numFloats + 1] + (inVals[thisIndex * numFloats + 3] + particleForceY * particleForceFactor) * dt;
-        //     newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
-        // }
         uint seed = uint(inVals[thisIndex * numFloats + 6]);
         float rand = (random(seed) - 0.5) * rangeOfMotion * dt;
         newAX = xForce * dt + rand;      

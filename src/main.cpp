@@ -21,7 +21,6 @@ using namespace std;
 #define totalVMaxSquare vMax
 #define numParticleFloats 8
 #define force 10000.0f
-#define particleForceFactor 100.0f
 
 #define scaleFactor 1080.0f
 #define numChunksX 20
@@ -362,8 +361,6 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(sfLoc, scaleFactor);
     pptLoc = glGetUniformLocation(computeProgram, "particleProximityThreshold");
     glUniform1f(pptLoc, ppt);
-    pfLoc = glGetUniformLocation(computeProgram, "particleForceFactor");
-    glUniform1f(pfLoc, particleForceFactor);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
