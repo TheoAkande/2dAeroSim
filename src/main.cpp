@@ -14,14 +14,14 @@
 using namespace std;
 
 #define numParticlesX 100
-#define numParticlesY 150
+#define numParticlesY 125
 #define particleMass 1.0f
-#define rangeOfMotion 0.0f
+#define rangeOfMotion 500.0f
 #define vMax 500.0f
 #define totalVMaxSquare vMax
 #define numParticleFloats 8
 #define force 10000.0f
-#define particleForceFactor force
+#define particleForceFactor 100.0f
 
 #define scaleFactor 1080.0f
 #define numChunksX 20

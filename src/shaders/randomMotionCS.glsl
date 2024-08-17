@@ -111,12 +111,24 @@ float random(uint seed) {
     return float(hash(seed)) / float(0xffffffffu);
 }
 
+float clampedVel(float vel) {
+    if (abs(vel) >= vMax) {
+        return vMax * (vel > 0.0 ? 1.0 : -1.0);
+    } else {
+        return vel;
+    }
+}
+
 void main()
 { 
     uint thisIndex = gl_GlobalInvocationID.x;
 
     float curX = inVals[thisIndex * numFloats];
     float curY = inVals[thisIndex * numFloats + 1];
+
+    float curVelX = inVals[thisIndex * numFloats + 2];
+    float curVelY = inVals[thisIndex * numFloats + 3];
+
     float newX;
     float newY;
     float newVX;
@@ -129,11 +141,10 @@ void main()
     float particleForceY = 0.0;
     bool change = false;
     int chunk = int(inVals[thisIndex * numFloats + 7]);
-    if (chunk > 0 && chunk < numChunksX * numChunksY) {
+    if (chunk >= 0 && chunk < numChunksX * numChunksY) {
         int particlesInChunk = chunkSizes[chunk];
         int chunkOffset = cumChunkSizes[chunk];
         for (int i = 0; i < particlesInChunk; i++) {
-            
             int otherIndex = chunkVals[chunkOffset + i];
             if (otherIndex == thisIndex) {
                 continue;
@@ -161,76 +172,86 @@ void main()
                 particleForceY += reflectedVel.y;
             }
         }
-    }
-    
 
-    if (abs(inVals[thisIndex * numFloats + 2]) >= vMax) {
-        float xSign = inVals[thisIndex * numFloats + 2] > 0.0 ? 1.0 : -1.0;
-        newX = inVals[thisIndex * numFloats] + (vMax * xSign + particleForceX * particleForceFactor) * dt;
-        if (abs(inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4]) >= abs(inVals[thisIndex * numFloats + 2])) {
-            newVX = vMax * xSign;
-        } else {
-            newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
+        curVelX += particleForceX * particleForceFactor * dt;
+        curVelY += particleForceY * particleForceFactor * dt;
+
+        newX = curX + clampedVel(curVelX) * dt;
+        newY = curY + clampedVel(curVelY) * dt;
+        newVX = clampedVel(curVelX + inVals[thisIndex * numFloats + 4] * dt);
+        newVY = clampedVel(curVelY + inVals[thisIndex * numFloats + 5] * dt);
+
+        // if (abs(inVals[thisIndex * numFloats + 2]) >= vMax) {
+        //     float xSign = inVals[thisIndex * numFloats + 2] > 0.0 ? 1.0 : -1.0;
+        //     newX = inVals[thisIndex * numFloats] + (vMax * xSign + particleForceX * particleForceFactor) * dt;
+        //     if (abs(inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4]) >= abs(inVals[thisIndex * numFloats + 2])) {
+        //         newVX = vMax * xSign;
+        //     } else {
+        //         newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
+        //     }
+        // } else {
+        //     newX = inVals[thisIndex * numFloats] + (inVals[thisIndex * numFloats + 2] + particleForceX * particleForceFactor) * dt;
+        //     newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
+        // }
+        // if (abs(inVals[thisIndex * numFloats + 3]) >= vMax) {
+        //     float ySign = inVals[thisIndex * numFloats + 3] > 0.0 ? 1.0 : -1.0;
+        //     newY = inVals[thisIndex * numFloats + 1] + (particleForceY * particleForceFactor + vMax * ySign) * dt;
+        //     if (abs(inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5]) >= abs(inVals[thisIndex * numFloats + 3])) {
+        //         newVY = vMax * ySign;
+        //     } else {
+        //         newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
+        //     }
+        // } else {
+        //     newY = inVals[thisIndex * numFloats + 1] + (inVals[thisIndex * numFloats + 3] + particleForceY * particleForceFactor) * dt;
+        //     newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
+        // }
+        uint seed = uint(inVals[thisIndex * numFloats + 6]);
+        float rand = (random(seed) - 0.5) * rangeOfMotion * dt;
+        newAX = xForce * dt + rand;      
+        seed = hash(seed);
+        rand = (random(seed) - 0.5) * rangeOfMotion * dt;
+        newAY = yForce * dt + rand;      
+        seed = hash(seed);
+        outVals[thisIndex * numFloats + 6] = seed;  
+
+        Point p3 = Point(curX, curY);
+        Point p4 = Point(newX, newY);
+        Line path = Line(p3, p4);
+        // Check for collisions with edges
+        for (int i = 0; i < numEdges; i++) {
+            Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
+            Point p2 = Point(edgeVals[i * 6 + 2], edgeVals[i * 6 + 3]);
+            Line edge = Line(p1, p2);
+            if (intersect(path, edge)) { // Intersect with line
+                vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
+                vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
+                vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
+                newX = curX;
+                newY = curY; 
+                newVX = reflectedVel.x;
+                newVY = reflectedVel.y;
+            }
         }
+
+        // Check new chunk position
+        int chunkX = int((newX + sf) / chunkWidth);
+        int chunkY = int((newY + sf) / chunkHeight);
+        float chunkIndex = float(chunkY * numChunksX + chunkX);
+
+        // if (change) {
+        //     newX = 1000000;
+        //     newY = 1000000;
+        // }
+
+        outVals[thisIndex * numFloats] = newX;   
+        outVals[thisIndex * numFloats + 1] = newY;   
+        outVals[thisIndex * numFloats + 2] = newVX;
+        outVals[thisIndex * numFloats + 3] = newVY;
+        outVals[thisIndex * numFloats + 4] = newAX;
+        outVals[thisIndex * numFloats + 5] = newAY;  
+        outVals[thisIndex * numFloats + 7] = chunkIndex; 
     } else {
-        newX = inVals[thisIndex * numFloats] + (inVals[thisIndex * numFloats + 2] + particleForceX * particleForceFactor) * dt;
-        newVX = inVals[thisIndex * numFloats + 2] + inVals[thisIndex * numFloats + 4] * dt;
-    }
-    if (abs(inVals[thisIndex * numFloats + 3]) >= vMax) {
-        float ySign = inVals[thisIndex * numFloats + 3] > 0.0 ? 1.0 : -1.0;
-        newY = inVals[thisIndex * numFloats + 1] + (particleForceY * particleForceFactor + vMax * ySign) * dt;
-        if (abs(inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5]) >= abs(inVals[thisIndex * numFloats + 3])) {
-            newVY = vMax * ySign;
-        } else {
-            newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
-        }
-    } else {
-        newY = inVals[thisIndex * numFloats + 1] + (inVals[thisIndex * numFloats + 3] + particleForceY * particleForceFactor) * dt;
-        newVY = inVals[thisIndex * numFloats + 3] + inVals[thisIndex * numFloats + 5] * dt;
-    }
-    uint seed = uint(inVals[thisIndex * numFloats + 6]);
-    float rand = (random(seed) - 0.5) * rangeOfMotion * dt;
-    newAX = xForce * dt + rand;      
-    seed = hash(seed);
-    rand = (random(seed) - 0.5) * rangeOfMotion * dt;
-    newAY = yForce * dt + rand;      
-    seed = hash(seed);
-    outVals[thisIndex * numFloats + 6] = seed;  
-
-    Point p3 = Point(curX, curY);
-    Point p4 = Point(newX, newY);
-    Line path = Line(p3, p4);
-    // Check for collisions with edges
-    for (int i = 0; i < numEdges; i++) {
-        Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
-        Point p2 = Point(edgeVals[i * 6 + 2], edgeVals[i * 6 + 3]);
-        Line edge = Line(p1, p2);
-        if (intersect(path, edge)) { // Intersect with line
-            vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
-            vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
-            vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
-            newX = curX;
-            newY = curY; 
-            newVX = reflectedVel.x;
-            newVY = reflectedVel.y;
-        }
-    }
-
-    // Check new chunk position
-    int chunkX = int((newX + sf) / chunkWidth);
-    int chunkY = int((newY + sf) / chunkHeight);
-    float chunkIndex = float(chunkY * numChunksX + chunkX);
-
-    if (change) {
-        newX = 1000000;
-        newY = 1000000;
-    }
-
-    outVals[thisIndex * numFloats] = newX;   
-    outVals[thisIndex * numFloats + 1] = newY;   
-    outVals[thisIndex * numFloats + 2] = newVX;
-    outVals[thisIndex * numFloats + 3] = newVY;
-    outVals[thisIndex * numFloats + 4] = newAX;
-    outVals[thisIndex * numFloats + 5] = newAY;  
-    outVals[thisIndex * numFloats + 7] = chunkIndex;                                                                            
+        outVals[thisIndex * numFloats] = curX;   
+        outVals[thisIndex * numFloats + 1] = curY; 
+    }                                                                           
 }
