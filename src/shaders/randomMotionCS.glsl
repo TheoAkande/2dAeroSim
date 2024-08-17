@@ -167,8 +167,11 @@ void main()
                 otherVelNormal = normalize(otherVelNormal);
                 vec2 curVel = normalize(vec2(curVelX, curVelY));
 
-
-                float totalMag = (sqrt(curVelX * curVelX + curVelY * curVelY) + sqrt(otherVelX * otherVelX + otherVelY * otherVelY)) / 2.0;
+                float totalMag = 
+                    sqrt(
+                        (curVelX + otherVelX) * (curVelX + otherVelX) + 
+                        (curVelY + otherVelY) * (curVelY + otherVelY)
+                    ) / 2.0;
 
                 vec2 reflectedVel = reflect(curVel, otherVelNormal) * totalMag;
 
