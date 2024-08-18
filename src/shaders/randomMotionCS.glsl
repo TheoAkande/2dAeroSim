@@ -68,6 +68,14 @@ Point order(float n1, float n2) {
     }
 }
 
+int checkSign(float n) {
+    if (n == 0.0) {
+        return 0;
+    } else {
+        return n < 0.0 ? -1 : 1;
+    }
+}
+
 // Check if bounding boxes of line and particle intersect
 bool boundingIntersect(Line l1, Line l2) {
     Point ordered_1 = order(l1.p1.x, l1.p2.x);
@@ -138,7 +146,6 @@ void main()
     // Check if particle collides with any other particles
     float particleForceX = 0.0;
     float particleForceY = 0.0;
-    bool change = false;
     int chunk = int(inVals[thisIndex * numFloats + 7]);
     if (chunk >= 0 && chunk < numChunksX * numChunksY) {
         int particlesInChunk = chunkSizes[chunk];
@@ -153,37 +160,23 @@ void main()
             float otherY = inVals[otherIndex * numFloats + 1];
 
             if (abs(curX - otherX) < particleProximityThreshold && abs(curY - otherY) < particleProximityThreshold) {
-                change = true;
-                float otherVelX = inVals[chunkVals[chunk] * numFloats + 2];
-                float otherVelY = inVals[chunkVals[chunk] * numFloats + 3];
-                Point other = Point(otherX, otherY);
-                Point otherEnd = Point(otherX + otherVelX, otherY + otherVelY); 
-                Point curPoint = Point(curX, curY);
-                int orien = orientation(other, otherEnd, curPoint);
-                vec2 otherVelNormal = vec2(otherVelY, -otherVelX);
-                if (orien == 1) {
-                    otherVelNormal = -otherVelNormal;
+                float otherVelX = inVals[chunkVals[chunkOffset + i] * numFloats + 2];
+                float otherVelY = inVals[chunkVals[chunkOffset + i] * numFloats + 3];
+
+                vec2 deltaV = vec2(curVelX - otherVelX, curVelY - otherVelY);
+                vec2 deltaP = vec2(curX - otherX, curY - otherY);
+                float pSquared = dot(deltaP, deltaP);
+                vec2 change = vec2(0, 0);
+                if (pSquared != 0) {
+                    change = (dot(deltaV, deltaP) / pSquared) * deltaP;
                 }
-                otherVelNormal = normalize(otherVelNormal);
-                vec2 curVel = normalize(vec2(curVelX, curVelY));
-
-                float totalMag = 
-                    sqrt(
-                        (curVelX + otherVelX) * (curVelX + otherVelX) + 
-                        (curVelY + otherVelY) * (curVelY + otherVelY)
-                    ) / 2.0;
-
-                vec2 reflectedVel = reflect(curVel, otherVelNormal) * totalMag;
-
-                particleForceX += reflectedVel.x;
-                particleForceY += reflectedVel.y;
+                particleForceX -= change.x;
+                particleForceY -= change.y;
             }
         }
-
-        if (particleForceX != 0 || particleForceY != 0) {
-            curVelX = particleForceX * dt;
-            curVelY = particleForceY * dt;
-        }
+        
+        curVelX += particleForceX;
+        curVelY += particleForceY;
 
         newX = curX + clampedVel(curVelX) * dt;
         newY = curY + clampedVel(curVelY) * dt;
@@ -202,6 +195,7 @@ void main()
         Point p3 = Point(curX, curY);
         Point p4 = Point(newX, newY);
         Line path = Line(p3, p4);
+        
         // Check for collisions with edges
         for (int i = 0; i < numEdges; i++) {
             Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
@@ -222,11 +216,6 @@ void main()
         int chunkX = int((newX + sf) / chunkWidth);
         int chunkY = int((newY + sf) / chunkHeight);
         float chunkIndex = float(chunkY * numChunksX + chunkX);
-
-        // if (change) {
-        //     newX = 1000000;
-        //     newY = 1000000;
-        // }
 
         outVals[thisIndex * numFloats] = newX;   
         outVals[thisIndex * numFloats + 1] = newY;   

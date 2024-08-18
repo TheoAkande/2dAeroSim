@@ -14,19 +14,19 @@
 
 using namespace std;
 
-#define numParticlesX 2
-#define numParticlesY 2
+#define numParticlesX 45
+#define numParticlesY 75
 #define particleMass 1.0f
 #define rangeOfMotion 0.0f
-#define vMax 500.0f
-#define totalVMaxSquare vMax
+#define vMax 5000.0f
+#define colourVMax 300.0f
 #define numParticleFloats 8
 #define force 10000.0f
 
 #define scaleFactor 1080.0f
 #define numChunksX 20
 #define numChunksY 20
-#define ppt 300.0f
+#define ppt 1.5f
 
 #define numObjects 1
 
@@ -38,8 +38,8 @@ double pastTime = 0.0;
 double deltaTime = 0.0;
 
 // for window
-int height = 1080;
-int width = 1920;
+int height = 1000;
+int width = 1000;
 GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
@@ -102,10 +102,8 @@ void updateChunkData(float particle_buffer[]) {
     }
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
         int chunk = particle_buffer[i * numParticleFloats + 7];
-        cout << chunk << endl;
         if (chunk >= 0 && chunk < numChunksX * numChunksY) {
             chunks.chunkSizes[chunk]++;
-            cout << "eee " << chunks.chunkSizes[chunk] << endl;
         }
     }
     chunks.cumChunkSizes[0] = 0;
@@ -280,7 +278,7 @@ void display(GLFWwindow *window) {
 
     // Draw particles
     glUseProgram(particleRenderingProgram);
-    glPointSize(30.0f);
+    glPointSize(3.0f);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
 
@@ -288,7 +286,7 @@ void display(GLFWwindow *window) {
     glUniform1f(sfLoc, scaleFactor);
 
     tvmsLoc = glGetUniformLocation(particleRenderingProgram, "totalVMax");
-    glUniform1f(tvmsLoc, vMax);
+    glUniform1f(tvmsLoc, colourVMax);
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -318,7 +316,7 @@ void display(GLFWwindow *window) {
 }
 
 void init(void) {
-    objects[0] = load2dObject("assets/objects/vertLine.2dObj");
+    objects[0] = load2dObject("assets/objects/box.2dObj");
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");

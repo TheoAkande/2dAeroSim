@@ -8,5 +8,5 @@ uniform float totalVMax;
 out vec4 colour;
 
 void main() {
-    colour = vec4(vertexSpeed.x / totalVMax, vertexSpeed.y / totalVMax, 1.0, 1.0);
+    colour = vec4(abs(vertexSpeed.x) / totalVMax, abs(vertexSpeed.y) / totalVMax, 1.0, 1.0);
 }
