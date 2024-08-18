@@ -21,6 +21,7 @@ using namespace std;
 #define vMax 5000.0f
 #define colourVMax 300.0f
 #define numParticleFloats 8
+#define numEdgeFloats 7
 #define force 10000.0f
 #define edgeElasticity 0.5f
 
@@ -69,6 +70,7 @@ struct Line {
     float x1, y1;
     float x2, y2;
     float nx, ny;
+    float elasticity;
 };
 
 struct Object {
@@ -76,6 +78,7 @@ struct Object {
     vector<Line> *edges;
     float mass, scale;
     float x, y;
+    float elasticity;
     int numEdges;
 };
 
@@ -135,6 +138,7 @@ Object load2dObject(const char *filePath) {
     newObject.y = 0.0f;
     newObject.mass = 1.0f;
     newObject.scale = 1.0f;
+    newObject.elasticity = edgeElasticity;
 
     int nv = 0;
 
@@ -151,6 +155,8 @@ Object load2dObject(const char *filePath) {
             sscanf(line.c_str(), "m %f", &newObject.mass);
         } else if (line.c_str()[0] == 's') {
             sscanf(line.c_str(), "s %f", &newObject.scale);
+        } else if (line.c_str()[0] == 'e') {
+            sscanf(line.c_str(), "e %f", &newObject.elasticity, &newObject.elasticity);
         }
     }
     fileStream.close();
@@ -163,6 +169,7 @@ Object load2dObject(const char *filePath) {
         edge.y2 = vertices->at((i + 1)).y;
         edge.nx = edge.y1 - edge.y2;
         edge.ny = edge.x2 - edge.x1;
+        edge.elasticity = newObject.elasticity;
         edges->push_back(edge);
     }
 
@@ -281,11 +288,12 @@ void setupComputeBuffers(void) {
             objectEdges.push_back(objects[j].edges->at(i).y2);
             objectEdges.push_back(objects[j].edges->at(i).nx);
             objectEdges.push_back(objects[j].edges->at(i).ny);
+            objectEdges.push_back(objects[j].edges->at(i).elasticity);
         }
         numEdgesTotal += objects[j].numEdges;
     }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[2]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, numEdgesTotal * 6 * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numEdgesTotal * numEdgeFloats * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
 
 void display(GLFWwindow *window) {
@@ -385,8 +393,8 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(sfLoc, scaleFactor);
     pptLoc = glGetUniformLocation(computeProgram, "particleProximityThreshold");
     glUniform1f(pptLoc, ppt);
-    eeLoc = glGetUniformLocation(computeProgram, "edgeElasticity");
-    glUniform1f(eeLoc, edgeElasticity);
+    eeLoc = glGetUniformLocation(computeProgram, "numEdgeFloats");
+    glUniform1i(eeLoc, numEdgeFloats);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
