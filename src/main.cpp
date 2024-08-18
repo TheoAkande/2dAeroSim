@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -13,6 +14,8 @@
 #include "Utils.h"
 
 using namespace std;
+
+#define benchmark true
 
 #define numParticlesX 45
 #define numParticlesY 75
@@ -359,7 +362,7 @@ void init(void) {
     setupComputeBuffers();
 }
 
-void runFrame(GLFWwindow *window, double currentTime) {
+double runFrame(GLFWwindow *window, double currentTime) {
     deltaTime = currentTime - pastTime;
     pastTime = currentTime;
 
@@ -431,6 +434,35 @@ void runFrame(GLFWwindow *window, double currentTime) {
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         yForce = -force;
     }
+    return deltaTime;
+}
+
+int writeBenchmarks(double avgFrameRate) {
+    // Define the file name (relative to the source code directory)
+    std::string fileName = "../../../benchmark.txt";
+
+    // Create and open a text file
+    std::ofstream outFile(fileName);
+
+    // Check if the file was successfully opened
+    if (outFile.is_open()) {
+        // Write to the file
+        outFile << "Benchmarks" << std::endl;
+        outFile << "Particles:    " << numParticlesX * numParticlesY << endl;
+        outFile << "Chunks:       " << numChunksX * numChunksY << endl;
+        outFile << "Objects:      " << numObjects << endl;
+        outFile << "Object Edges: " << numEdgesTotal << endl;
+        outFile << "--------------" << endl;
+        outFile << "Frame Rate:   " << avgFrameRate << endl;
+
+        // Close the file
+        outFile.close();
+        std::cout << "File written successfully." << std::endl;
+    } else {
+        std::cerr << "Unable to open file for writing." << std::endl;
+    }
+
+    return 0;
 }
 
 int main(void) {
@@ -446,10 +478,19 @@ int main(void) {
     }
     glfwSwapInterval(1);
     init();
+    double time = 0.0;
+    int frames = 0;
     while (!glfwWindowShouldClose(window)) {
-        runFrame(window, glfwGetTime());
+        time += runFrame(window, glfwGetTime());
+        frames++;
     }
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    double avgFrameRate = (double)frames / time;
+    cout << "Average frame rate: " << avgFrameRate << endl;
+    
+    if (benchmark) writeBenchmarks(avgFrameRate);
+
     exit(EXIT_SUCCESS);
 }

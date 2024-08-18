@@ -1,0 +1,7 @@
+Benchmarks
+Particles:    3375
+Chunks:       400
+Objects:      3
+Object Edges: 12
+--------------
+Frame Rate:   59.0872
