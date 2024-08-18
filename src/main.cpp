@@ -20,7 +20,7 @@ using namespace std;
 #define numParticlesX 45
 #define numParticlesY 75
 #define particleMass 1.0f
-#define rangeOfMotion 0.0f
+#define rangeOfMotion 300.0f
 #define vMax 5000.0f
 #define colourVMax 300.0f
 #define numParticleFloats 8
@@ -352,7 +352,7 @@ void init(void) {
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
-    computeProgram = Utils::createShaderProgram("shaders/randomMotionCS.glsl");
+    computeProgram = Utils::createShaderProgram("shaders/collisionComputeShader.glsl");
 
     createParticles();
 
