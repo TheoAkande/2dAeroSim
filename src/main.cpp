@@ -439,7 +439,26 @@ double runFrame(GLFWwindow *window, double currentTime) {
 
 int writeBenchmarks(double avgFrameRate) {
     // Define the file name (relative to the source code directory)
-    std::string fileName = "../../../benchmark.txt";
+    string fileName = "../../../benchmark.txt";
+
+    ifstream inFile(fileName);
+    double oldFrameRate = 0.0;
+
+    if (inFile.is_open()) {
+        string line;
+        // Read the file line by line
+        while (getline(inFile, line)) {
+            if (line[0] == 'F') {
+                sscanf(line.c_str(), "Frame Rate:   %lf", &oldFrameRate);
+            }
+        }
+
+        // Close the file
+        inFile.close();
+    } else {
+        cerr << "Unable to open file for reading." << endl;
+        return 1;
+    }
 
     // Create and open a text file
     std::ofstream outFile(fileName);
@@ -447,7 +466,7 @@ int writeBenchmarks(double avgFrameRate) {
     // Check if the file was successfully opened
     if (outFile.is_open()) {
         // Write to the file
-        outFile << "Benchmarks" << std::endl;
+        outFile << "Benchmarks" << endl;
         outFile << "Particles:    " << numParticlesX * numParticlesY << endl;
         outFile << "Chunks:       " << numChunksX * numChunksY << endl;
         outFile << "Objects:      " << numObjects << endl;
@@ -455,11 +474,15 @@ int writeBenchmarks(double avgFrameRate) {
         outFile << "--------------" << endl;
         outFile << "Frame Rate:   " << avgFrameRate << endl;
 
+        if (oldFrameRate != 0.0) {
+            outFile << "Improvement:  " << (avgFrameRate - oldFrameRate) / oldFrameRate * 100.0 << "%" << endl;
+        }
+
         // Close the file
         outFile.close();
-        std::cout << "File written successfully." << std::endl;
+        cout << "File written successfully." << endl;
     } else {
-        std::cerr << "Unable to open file for writing." << std::endl;
+        cerr << "Unable to open file for writing." << endl;
     }
 
     return 0;
