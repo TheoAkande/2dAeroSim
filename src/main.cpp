@@ -28,11 +28,12 @@ using namespace std;
 #define numChunksY 20
 #define ppt 1.5f
 
-#define numObjects 1
-
 #define numVBOs 2
 #define numVAOs 1
 #define numCBs 6
+
+#define numObjects 3
+const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
@@ -88,6 +89,9 @@ struct Chunks {
 Particle particles[numParticlesX * numParticlesY];
 Object objects[numObjects];
 Chunks chunks = Chunks();
+int objectsOffset[numObjects];
+int numEdgesTotal = 0;
+int objectCounter = 0;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -164,6 +168,13 @@ Object load2dObject(const char *filePath) {
     newObject.numEdges = nv - 1;
     newObject.edges = edges;
 
+    if (objectCounter == 0) {
+        objectsOffset[0] = 0;
+    } else {
+        objectsOffset[objectCounter] = objectsOffset[objectCounter - 1] + objects[objectCounter - 1].vertices->size();
+    }
+    objectCounter++;
+
     return newObject;
 }
 
@@ -211,9 +222,11 @@ void setupScene(void) {
         curInBuffer[i * numParticleFloats + 7] = static_cast<float>(particles[i].chunk);
     }
 
-    for (int i = 0; i < objects[0].vertices->size(); i++) {
-        objectLines.push_back(objects[0].vertices->at(i).x);
-        objectLines.push_back(objects[0].vertices->at(i).y);
+    for (int j = 0; j < numObjects; j++) {
+        for (int i = 0; i < objects[j].vertices->size(); i++) {
+            objectLines.push_back(objects[j].vertices->at(i).x);
+            objectLines.push_back(objects[j].vertices->at(i).y);
+        }
     }
 
     glGenVertexArrays(numVAOs, vao);
@@ -259,16 +272,19 @@ void setupComputeBuffers(void) {
 
     // Doesn't need to be rebound each time (yet at least)
     vector<float> objectEdges;
-    for (int i = 0; i < objects[0].numEdges; i++) {
-        objectEdges.push_back(objects[0].edges->at(i).x1);
-        objectEdges.push_back(objects[0].edges->at(i).y1);
-        objectEdges.push_back(objects[0].edges->at(i).x2);
-        objectEdges.push_back(objects[0].edges->at(i).y2);
-        objectEdges.push_back(objects[0].edges->at(i).nx);
-        objectEdges.push_back(objects[0].edges->at(i).ny);
+    for (int j = 0; j < numObjects; j++) {
+        for (int i = 0; i < objects[j].numEdges; i++) {
+            objectEdges.push_back(objects[j].edges->at(i).x1);
+            objectEdges.push_back(objects[j].edges->at(i).y1);
+            objectEdges.push_back(objects[j].edges->at(i).x2);
+            objectEdges.push_back(objects[j].edges->at(i).y2);
+            objectEdges.push_back(objects[j].edges->at(i).nx);
+            objectEdges.push_back(objects[j].edges->at(i).ny);
+        }
+        numEdgesTotal += objects[j].numEdges;
     }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[2]);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, objects[0].numEdges * 6 * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, numEdgesTotal * 6 * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
 
 void display(GLFWwindow *window) {
@@ -305,18 +321,22 @@ void display(GLFWwindow *window) {
     sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
     glUniform1f(sfLoc, scaleFactor);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 0, 0);
-    glEnableVertexAttribArray(0);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glDrawArrays(GL_LINE_STRIP, 0, objects[0].vertices->size());
+    for (int i = 0; i < numObjects; i++) {
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)(2 * sizeof(float) * objectsOffset[i]));
+        glEnableVertexAttribArray(0);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDrawArrays(GL_LINE_STRIP, 0, objects[i].vertices->size());
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
 
 void init(void) {
-    objects[0] = load2dObject("assets/objects/box.2dObj");
+    for (int i = 0; i < numObjects; i++) {
+        objects[i] = load2dObject(assets[i]);
+    }
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
@@ -351,7 +371,7 @@ void runFrame(GLFWwindow *window, double currentTime) {
     yForceLoc = glGetUniformLocation(computeProgram, "yForce");
     glUniform1f(yForceLoc, yForce);
     numEdgesLoc = glGetUniformLocation(computeProgram, "numEdges");
-    glUniform1i(numEdgesLoc, objects[0].numEdges);
+    glUniform1i(numEdgesLoc, numEdgesTotal);
     chunkWdithLoc = glGetUniformLocation(computeProgram, "chunkWidth");
     glUniform1f(chunkWdithLoc, chunks.chunkWidth);
     chunkHeightLoc = glGetUniformLocation(computeProgram, "chunkHeight");
@@ -377,24 +397,6 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);
 
     updateChunkData(curOutBuffer);
-
-    // system("cls");
-    // cout << "particle 1:" << endl;
-    // cout << "vx: " << curOutBuffer[2] << ", ";
-    // cout << "vy: " << curOutBuffer[3] << ", ";
-    // cout << "chunk: " << curOutBuffer[7] << endl;
-
-    // cout << "particle 2:" << endl;
-    // cout << "vx: " << curOutBuffer[10] << ", ";
-    // cout << "vy: " << curOutBuffer[11] << ", ";
-    // cout << "chunk: " << curOutBuffer[15] << endl;
-    // cout << "----------------" << endl;
-
-    // cout << "Chunk data" << endl;
-    // cout << "Chunk " << curOutBuffer[7] << ": ";
-    // cout << chunks.chunkSizes[(int)(curOutBuffer[7])] << endl;
-    // cout << "Chunk " << curOutBuffer[15] << ": " << chunks.chunkSizes[(int)(curOutBuffer[15])] << endl;
-    // cout << chunks.chunks[0] << " " << chunks.chunks[1] << endl;
 
     float *temp = curOutBuffer;
     curOutBuffer = curInBuffer;
