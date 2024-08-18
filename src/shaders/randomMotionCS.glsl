@@ -23,6 +23,7 @@ uniform float chunkWidth;
 uniform float chunkHeight;
 uniform float sf;
 uniform float particleProximityThreshold;
+uniform float edgeElasticity;
 
 struct Point {
     float x;
@@ -195,7 +196,7 @@ void main()
         Point p3 = Point(curX, curY);
         Point p4 = Point(newX, newY);
         Line path = Line(p3, p4);
-        
+
         // Check for collisions with edges
         for (int i = 0; i < numEdges; i++) {
             Point p1 = Point(edgeVals[i * 6], edgeVals[i * 6 + 1]);
@@ -204,7 +205,7 @@ void main()
             if (intersect(path, edge)) { // Intersect with line
                 vec2 edgeVec = vec2(edgeVals[i * 6 + 4], edgeVals[i * 6 + 5]);
                 vec2 velVec = vec2(inVals[thisIndex * numFloats + 2], inVals[thisIndex * numFloats + 3]);
-                vec2 reflectedVel = reflect(velVec, normalize(edgeVec));
+                vec2 reflectedVel = reflect(velVec, normalize(edgeVec)) * edgeElasticity;
                 newX = curX;
                 newY = curY; 
                 newVX = reflectedVel.x;

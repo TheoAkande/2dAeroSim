@@ -22,6 +22,7 @@ using namespace std;
 #define colourVMax 300.0f
 #define numParticleFloats 8
 #define force 10000.0f
+#define edgeElasticity 0.5f
 
 #define scaleFactor 1080.0f
 #define numChunksX 20
@@ -47,7 +48,7 @@ GLuint vbo[numVBOs];
 // for compute shader
 GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, 
         sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc,
-        pptLoc, pfLoc;
+        pptLoc, pfLoc, eeLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -384,6 +385,8 @@ void runFrame(GLFWwindow *window, double currentTime) {
     glUniform1f(sfLoc, scaleFactor);
     pptLoc = glGetUniformLocation(computeProgram, "particleProximityThreshold");
     glUniform1f(pptLoc, ppt);
+    eeLoc = glGetUniformLocation(computeProgram, "edgeElasticity");
+    glUniform1f(eeLoc, edgeElasticity);
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, computeBuffers[0]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, computeBuffers[1]);
