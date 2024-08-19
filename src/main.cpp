@@ -17,8 +17,8 @@ using namespace std;
 
 #define benchmark true
 
-#define numParticlesX 64
-#define numParticlesY 64
+#define numParticlesX 128
+#define numParticlesY 128
 #define particleMass 1.0f
 #define rangeOfMotion 300.0f
 #define vMax 5000.0f
@@ -36,7 +36,7 @@ using namespace std;
 #define numVBOs 2
 #define numVAOs 1
 #define numCBs 6
-#define workGroupSize 32
+#define workGroupSize 64
 
 #define numObjects 3
 const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
