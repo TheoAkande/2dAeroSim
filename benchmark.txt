@@ -4,5 +4,5 @@ Chunks:       400
 Objects:      3
 Object Edges: 12
 --------------
-Frame Rate:   55.1497
-Improvement:  -1.86158%
+Frame Rate:   58.1011
+Improvement:  0.451375%

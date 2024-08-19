@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define benchmark true
+#define benchmark false
 
 #define numParticlesX 128
 #define numParticlesY 128
@@ -29,8 +29,8 @@ using namespace std;
 #define edgeElasticity 0.5f
 
 #define scaleFactor 1080.0f
-#define numChunksX 20
-#define numChunksY 20
+#define numChunksX 32
+#define numChunksY 32
 #define ppt 1.5f
 
 #define numVBOs 2
@@ -43,6 +43,8 @@ const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dO
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
+
+int numParticles = numParticlesX * numParticlesY;
 
 // for window
 int height = 1000;
@@ -202,20 +204,34 @@ void printObject(Object object) {
 void createParticles(void) {
     setupChunks();
 
-    for (int i = 0; i < numParticlesX; i++) {
-        for (int j = 0; j < numParticlesY; j++) {
-            particles[i + j * numParticlesX].x = 
-                (-((float)i / (float)numParticlesX) - (1 / ((float)numParticlesX * 2))) * scaleFactor;
-            particles[i + j * numParticlesX].y = 
-                (((float)j - ((float)numParticlesY / 2.0f)) * 2.0f / (float)numParticlesY + (1 / ((float)numParticlesY))) * scaleFactor;
-            particles[i + j * numParticlesX].vx = 0;
-            particles[i + j * numParticlesX].vy = 0;
-            particles[i + j * numParticlesX].ax = 0;
-            particles[i + j * numParticlesX].ay = 0;
-            particles[i + j * numParticlesX].seed = rand();
-            particles[i + j * numParticlesX].chunk = 
-                (int)((particles[i + j * numParticlesX].x + scaleFactor) / chunks.chunkWidth) + 
-                (int)((particles[i + j * numParticlesX].y + scaleFactor) / chunks.chunkHeight) * numChunksX;
+    // we want to add particles in grids of workGroup sizes for better spatial locality
+    // workgroup sizes should be 64 or 32
+    int groupWidthX = (workGroupSize == 64) ? 8 : 4;
+    int groupWidthY = workGroupSize / groupWidthX;
+    int numGroups = numParticles / workGroupSize;
+
+    for (int i = 0; i < numGroups; i++) {
+
+        int groupBaseX = (i % (numParticlesX / groupWidthX)) * groupWidthX;
+        int groupBaseY = (i / (numParticlesX / groupWidthX)) * groupWidthY;
+
+        for (int j = 0; j < workGroupSize; j++) {
+            int x = groupBaseX + (j % groupWidthX);
+            int y = groupBaseY + (j / groupWidthX);
+
+            particles[x + y * numParticlesX].x = 
+                (-((float)x / (float)numParticlesX) - (1 / ((float)numParticlesX * 2))) * scaleFactor;
+            particles[x + y * numParticlesX].y = 
+                (((float)y - ((float)numParticlesY / 2.0f)) * 2.0f / (float)numParticlesY + (1 / ((float)numParticlesY))) * scaleFactor;
+            particles[x + y * numParticlesX].vx = 0;
+            particles[x + y * numParticlesX].vy = 0;
+            particles[x + y * numParticlesX].ax = 0;
+            particles[x + y * numParticlesX].ay = 0;
+            particles[x + y * numParticlesX].seed = rand();
+            particles[x + y * numParticlesX].chunk = 
+                (int)((particles[x + y * numParticlesX].x + scaleFactor) / chunks.chunkWidth) + 
+                (int)((particles[x + y * numParticlesX].y + scaleFactor) / chunks.chunkHeight) * numChunksX;
+
         }
     }
 }
