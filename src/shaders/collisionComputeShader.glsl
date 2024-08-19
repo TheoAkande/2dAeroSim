@@ -1,6 +1,6 @@
 #version 430
 
-layout (local_size_x = 1) in; // sets the number of invocations per work group to 1
+layout (local_size_x = 32) in; // sets the number of invocations per work group to 1
 
 layout (binding = 0) buffer inputBuffer { float inVals[]; };
 layout (binding = 1) buffer outputBuffer { float outVals[]; };

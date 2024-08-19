@@ -17,8 +17,8 @@ using namespace std;
 
 #define benchmark true
 
-#define numParticlesX 45
-#define numParticlesY 75
+#define numParticlesX 64
+#define numParticlesY 64
 #define particleMass 1.0f
 #define rangeOfMotion 300.0f
 #define vMax 5000.0f
@@ -36,6 +36,7 @@ using namespace std;
 #define numVBOs 2
 #define numVAOs 1
 #define numCBs 6
+#define workGroupSize 32
 
 #define numObjects 3
 const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
@@ -405,7 +406,7 @@ double runFrame(GLFWwindow *window, double currentTime) {
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, computeBuffers[3]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, computeBuffers[4]);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, computeBuffers[5]);
-    glDispatchCompute(numParticlesX * numParticlesY, 1, 1); 
+    glDispatchCompute(numParticlesX * numParticlesY / workGroupSize, 1, 1); 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[1]);
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);

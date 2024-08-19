@@ -1,8 +1,8 @@
 Benchmarks
-Particles:    3375
+Particles:    4096
 Chunks:       400
 Objects:      3
 Object Edges: 12
 --------------
-Frame Rate:   46.2215
-Improvement:  -22.2115%
+Frame Rate:   56.1455
+Improvement:  4.78991%
