@@ -152,6 +152,7 @@ void main()
     if (chunk >= 0 && chunk < numChunksX * numChunksY) {
         int particlesInChunk = chunkSizes[chunk];
         int chunkOffset = cumChunkSizes[chunk];
+        int nCollisions = 0;
         for (int i = 0; i < particlesInChunk; i++) {
             int otherIndex = chunkVals[chunkOffset + i];
             if (uint(otherIndex) == thisIndex) {
@@ -174,11 +175,17 @@ void main()
                 }
                 particleForceX -= change.x;
                 particleForceY -= change.y;
+                nCollisions += 1;
             }
         }
         
-        curVelX += particleForceX * particleElasticity;
-        curVelY += particleForceY * particleElasticity;
+        for (int i = 0; i < nCollisions; i++) {
+            particleForceX *= particleElasticity;
+            particleForceY *= particleElasticity;
+        }
+
+        curVelX += particleForceX;
+        curVelY += particleForceY;
 
         newX = curX + clampedVel(curVelX) * dt;
         newY = curY + clampedVel(curVelY) * dt;

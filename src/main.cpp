@@ -27,7 +27,7 @@ using namespace std;
 #define numEdgeFloats 7
 #define force 10000.0f
 #define edgeElasticity 0.5f
-#define particleElasticity 0.75f
+#define particleElasticity 0.975f
 
 #define scaleFactor 1080.0f
 #define numChunksX 32
@@ -38,6 +38,11 @@ using namespace std;
 #define numVAOs 1
 #define numCBs 6
 #define workGroupSize 64
+
+#define windowWidth 2000
+#define windowHeight 1500
+#define simulationWidth 1000
+#define simulationHeight 1000
 
 #define numObjects 3
 const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
@@ -329,7 +334,7 @@ void setupComputeBuffers(void) {
 void display(GLFWwindow *window) {
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
-    glfwGetFramebufferSize(window, &width, &height);
+    // glfwGetFramebufferSize(window, &width, &height);
 
     // Draw particles
     glUseProgram(particleRenderingProgram);
@@ -537,7 +542,7 @@ int main(void) {
     }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    GLFWwindow* window = glfwCreateWindow(width, height, "2dAeroSim", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(windowWidth, windowHeight, "2dAeroSim", NULL, NULL);
     glfwMakeContextCurrent(window);
     if (glewInit() != GLEW_OK) { 
         exit(EXIT_FAILURE); 
