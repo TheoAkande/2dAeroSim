@@ -281,6 +281,10 @@ void bindComputeBuffers(void) {
     glBufferData(GL_SHADER_STORAGE_BUFFER, numChunksX * numChunksY * sizeof(int), &chunks.cumChunkSizes[0], GL_STATIC_DRAW);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[5]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numChunksX * numChunksY * sizeof(int), &chunks.chunkSizes[0], GL_STATIC_DRAW);
+
+    
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), curInBuffer, GL_STATIC_DRAW);
 }
 
 void setupComputeBuffers(void) {
@@ -344,7 +348,6 @@ void display(GLFWwindow *window) {
 
     // Draw object
     glUseProgram(objectRenderingProgram);
-    glPointSize(5.0f);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 
     sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
@@ -379,12 +382,7 @@ void init(void) {
     setupComputeBuffers();
 }
 
-double runFrame(GLFWwindow *window, double currentTime) {
-    deltaTime = currentTime - pastTime;
-    pastTime = currentTime;
-
-    display(window);
-
+void runComputeShader(void) {
     glUseProgram(computeProgram);
 
     romLoc = glGetUniformLocation(computeProgram, "rangeOfMotion");
@@ -428,14 +426,22 @@ double runFrame(GLFWwindow *window, double currentTime) {
     glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, sizeof(buffer1), curOutBuffer);
 
     updateChunkData(curOutBuffer);
+}
 
+void swapBuffers(void) {
     float *temp = curOutBuffer;
     curOutBuffer = curInBuffer;
     curInBuffer = temp;
+}
 
+double runFrame(GLFWwindow *window, double currentTime) {
+    deltaTime = currentTime - pastTime;
+    pastTime = currentTime;
+
+    display(window);
+    runComputeShader();
+    swapBuffers();
     bindComputeBuffers();
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), curInBuffer, GL_STATIC_DRAW);
 
     xForce = 0.0f;
     yForce = 0.0f;
