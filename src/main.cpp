@@ -34,7 +34,7 @@ using namespace std;
 #define numChunksY 32
 #define ppt 1.5f
 
-#define numVBOs 2
+#define numVBOs 4
 #define numVAOs 1
 #define numCBs 6
 #define workGroupSize 64
@@ -43,6 +43,9 @@ using namespace std;
 #define windowHeight 1500
 #define simulationWidth 1000
 #define simulationHeight 1000
+
+#define FPSx -0.95f
+#define FPSy 0.95f
 
 #define numObjects 3
 const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
@@ -57,6 +60,10 @@ glm::mat4 viewMat;
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
+double lastFPSUpdate;
+int frames;
+int framesTotal;
+int lastFrames;
 
 int numParticles = numParticlesX * numParticlesY;
 
@@ -66,17 +73,23 @@ int width = 1000;
 GLuint vao[numVAOs];
 GLuint vbo[numVBOs];
 
+GLuint numbersTexture;
+
 // for compute shader
 GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, 
         sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc,
         pptLoc, pfLoc, eeLoc, peLoc, vMatLoc;
 GLuint computeBuffers[numCBs];
-GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
+GLuint particleRenderingProgram, objectRenderingProgram, computeProgram, textureRenderingProgram;
 float *curInBuffer;
 float *curOutBuffer;
 float buffer1[numParticlesX * numParticlesY * numParticleFloats];
 float buffer2[numParticlesX * numParticlesY * numParticleFloats];
 float xForce, yForce = 0.0f;
+float boxCoords[8];
+float texCoords[8];
+
+float fpsOffsetX, fpsOffsetY;
 
 struct Particle {
     float x, y;
@@ -116,6 +129,7 @@ Chunks chunks = Chunks();
 int objectsOffset[numObjects];
 int numEdgesTotal = 0;
 int objectCounter = 0;
+double curFPS;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -378,11 +392,66 @@ void display(GLFWwindow *window) {
         glDrawArrays(GL_LINE_STRIP, 0, objects[i].vertices->size());
     }
 
+    // Show fps
+    glUseProgram(textureRenderingProgram);
+    int digits = 0;
+    int digVal = 1;
+    int intFPS = (int)curFPS;
+    while (intFPS / digVal > 0) {
+        digits++;
+        digVal *= 10;
+    }
+    float digitBaseY = FPSy - fpsOffsetY;
+    for (int i = 0; i < digits; i++) {
+        digVal /= 10;
+        int intDigit = intFPS / digVal;
+        intFPS = intFPS % digVal;
+        float digitBaseX = FPSx + (float)i * fpsOffsetX;
+        float digTexCoord = intDigit * 0.1f;
+        boxCoords[0] = digitBaseX; 
+        boxCoords[1] = digitBaseY;
+        boxCoords[2] = digitBaseX + fpsOffsetX;
+        boxCoords[3] = digitBaseY;
+        boxCoords[4] = digitBaseX + fpsOffsetX;
+        boxCoords[5] = digitBaseY + fpsOffsetY;
+        boxCoords[6] = digitBaseX;
+        boxCoords[7] = digitBaseY + fpsOffsetY;
+
+        texCoords[0] = digTexCoord;
+        texCoords[1] = 0.0f;
+        texCoords[2] = digTexCoord + 0.1f;
+        texCoords[3] = 0.0f;
+        texCoords[4] = digTexCoord + 0.1f;
+        texCoords[5] = 1.0f;
+        texCoords[6] = digTexCoord;
+        texCoords[7] = 1.0f;
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(boxCoords), &boxCoords[0], GL_STATIC_DRAW);
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), &texCoords[0], GL_STATIC_DRAW);
+        glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(1);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, numbersTexture);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);        
+    }
+
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
 
 void init(void) {
+    lastFPSUpdate = 0.0l;
+
+    numbersTexture = Utils::loadTexture("assets/textures/numbers.jpg");
+
+    fpsOffsetX = 40.0f / (float)windowWidth;
+    fpsOffsetY = 60.0f / (float)windowHeight;
+
     scaleX = (float)simulationWidth / (float)windowWidth;
     scaleY = (float)simulationHeight / (float)windowHeight;
     viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
@@ -393,6 +462,7 @@ void init(void) {
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
     objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
+    textureRenderingProgram = Utils::createShaderProgram("shaders/textureVert.glsl", "shaders/textureFrag.glsl");
     computeProgram = Utils::createShaderProgram("shaders/collisionComputeShader.glsl");
 
     createParticles();
@@ -460,6 +530,12 @@ void swapBuffers(void) {
 double runFrame(GLFWwindow *window, double currentTime) {
     deltaTime = currentTime - pastTime;
     pastTime = currentTime;
+
+    if (currentTime - lastFPSUpdate > 1.0) {
+        curFPS = (framesTotal - lastFrames) / (currentTime - lastFPSUpdate);
+        lastFPSUpdate = currentTime;
+        lastFrames = framesTotal;
+    }
 
     display(window);
 
@@ -560,7 +636,7 @@ int main(void) {
     glfwSwapInterval(1);
     init();
     double time = 0.0;
-    int frames = 0;
+    frames = 0;
     double lastTime = 0.0;
     while (!glfwWindowShouldClose(window)) {
         lastTime = runFrame(window, glfwGetTime());
@@ -568,6 +644,7 @@ int main(void) {
             time += lastTime;
             frames++;
         }
+        framesTotal++;
     }
     glfwDestroyWindow(window);
     glfwTerminate();
