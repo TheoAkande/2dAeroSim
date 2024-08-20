@@ -43,7 +43,7 @@ const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dO
 
 pair<float, float> constantForce = {0.0f, -20000.0f};
 
-bool doSimulation = true;
+bool doSimulation = false;
 bool spaceHeld = false;
 
 double pastTime = 0.0;
@@ -471,6 +471,9 @@ double runFrame(GLFWwindow *window, double currentTime) {
         if (!spaceHeld) doSimulation = !doSimulation;
         spaceHeld = true;
     } 
+    if (!doSimulation) {
+        return -1;
+    }
     return deltaTime;
 }
 
@@ -540,17 +543,25 @@ int main(void) {
     init();
     double time = 0.0;
     int frames = 0;
+    double lastTime = 0.0;
     while (!glfwWindowShouldClose(window)) {
-        time += runFrame(window, glfwGetTime());
-        frames++;
+        lastTime = runFrame(window, glfwGetTime());
+        if (lastTime > 0) {
+            time += lastTime;
+            frames++;
+        }
     }
     glfwDestroyWindow(window);
     glfwTerminate();
 
-    double avgFrameRate = (double)frames / time;
-    cout << "Average frame rate: " << avgFrameRate << endl;
-    
-    if (benchmark) writeBenchmarks(avgFrameRate);
+    if (time > 0) {
+        double avgFrameRate = (double)frames / time;
+        cout << "Average frame rate: " << avgFrameRate << endl;
+        
+        if (benchmark) writeBenchmarks(avgFrameRate);
+    } else {
+        cout << "No frames run." << endl;
+    }
 
     exit(EXIT_SUCCESS);
 }
