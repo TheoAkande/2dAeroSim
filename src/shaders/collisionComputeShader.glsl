@@ -24,6 +24,7 @@ uniform float chunkHeight;
 uniform float sf;
 uniform float particleProximityThreshold;
 uniform int numEdgeFloats;
+uniform float particleElasticity;
 
 struct Point {
     float x;
@@ -176,8 +177,8 @@ void main()
             }
         }
         
-        curVelX += particleForceX;
-        curVelY += particleForceY;
+        curVelX += particleForceX * particleElasticity;
+        curVelY += particleForceY * particleElasticity;
 
         newX = curX + clampedVel(curVelX) * dt;
         newY = curY + clampedVel(curVelY) * dt;
