@@ -41,6 +41,8 @@ using namespace std;
 #define numObjects 3
 const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
 
+pair<float, float> constantForce = {0.0f, -20000.0f};
+
 double pastTime = 0.0;
 double deltaTime = 0.0;
 
@@ -443,19 +445,19 @@ double runFrame(GLFWwindow *window, double currentTime) {
     swapBuffers();
     bindComputeBuffers();
 
-    xForce = 0.0f;
-    yForce = 0.0f;
+    xForce = constantForce.first;
+    yForce = constantForce.second;
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        xForce = -force;
+        xForce -= force;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        xForce = force;
+        xForce += force;
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        yForce = force;
+        yForce += force;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        yForce = -force;
+        yForce -= force;
     }
     return deltaTime;
 }
