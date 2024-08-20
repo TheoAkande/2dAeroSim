@@ -5,10 +5,11 @@ layout (location = 1) in vec2 vertexSpeedIn;
 
 uniform float sf;
 uniform float totalVMax;
+uniform mat4 viewMat;
 
 out vec2 vertexSpeed;
 
 void main() {
     vertexSpeed = vec2(vertexSpeedIn.x, vertexSpeedIn.y);
-    gl_Position = vec4(vertexPosition.x / sf, vertexPosition.y / sf, 0.0, 1.0);
+    gl_Position = viewMat * vec4(vertexPosition.x / sf, vertexPosition.y / sf, 0.0, 1.0);
 }

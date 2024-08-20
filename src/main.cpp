@@ -51,6 +51,9 @@ pair<float, float> constantForce = {0.0f, -20000.0f};
 
 bool doSimulation = false;
 bool spaceHeld = false;
+float scaleX;
+float scaleY;
+glm::mat4 viewMat;
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
@@ -66,7 +69,7 @@ GLuint vbo[numVBOs];
 // for compute shader
 GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc, 
         sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc,
-        pptLoc, pfLoc, eeLoc, peLoc;
+        pptLoc, pfLoc, eeLoc, peLoc, vMatLoc;
 GLuint computeBuffers[numCBs];
 GLuint particleRenderingProgram, objectRenderingProgram, computeProgram;
 float *curInBuffer;
@@ -344,9 +347,10 @@ void display(GLFWwindow *window) {
 
     sfLoc = glGetUniformLocation(particleRenderingProgram, "sf");
     glUniform1f(sfLoc, scaleFactor);
-
     tvmsLoc = glGetUniformLocation(particleRenderingProgram, "totalVMax");
     glUniform1f(tvmsLoc, colourVMax);
+    vMatLoc = glGetUniformLocation(particleRenderingProgram, "viewMat");
+    glUniformMatrix4fv(vMatLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
 
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, numParticleFloats * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
@@ -363,6 +367,8 @@ void display(GLFWwindow *window) {
 
     sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
     glUniform1f(sfLoc, scaleFactor);
+    vMatLoc = glGetUniformLocation(objectRenderingProgram, "viewMat");
+    glUniformMatrix4fv(vMatLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
 
     for (int i = 0; i < numObjects; i++) {
         glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)(2 * sizeof(float) * objectsOffset[i]));
@@ -377,6 +383,10 @@ void display(GLFWwindow *window) {
 }
 
 void init(void) {
+    scaleX = (float)simulationWidth / (float)windowWidth;
+    scaleY = (float)simulationHeight / (float)windowHeight;
+    viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
+
     for (int i = 0; i < numObjects; i++) {
         objects[i] = load2dObject(assets[i]);
     }
