@@ -43,6 +43,9 @@ const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dO
 
 pair<float, float> constantForce = {0.0f, -20000.0f};
 
+bool doSimulation = true;
+bool spaceHeld = false;
+
 double pastTime = 0.0;
 double deltaTime = 0.0;
 
@@ -441,24 +444,33 @@ double runFrame(GLFWwindow *window, double currentTime) {
     pastTime = currentTime;
 
     display(window);
-    runComputeShader();
-    swapBuffers();
-    bindComputeBuffers();
 
-    xForce = constantForce.first;
-    yForce = constantForce.second;
+    if (doSimulation) {
+        runComputeShader();
+        swapBuffers();
+        bindComputeBuffers();
+
+        xForce = constantForce.first;
+        yForce = constantForce.second;
+    }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        xForce -= force;
+        xForce = constantForce.first - force;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        xForce += force;
+        xForce = constantForce.first + force;
     }
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        yForce += force;
+        yForce = constantForce.second + force;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        yForce -= force;
+        yForce = constantForce.second - force;
     }
+    if (!glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        spaceHeld = false;
+    } else {
+        if (!spaceHeld) doSimulation = !doSimulation;
+        spaceHeld = true;
+    } 
     return deltaTime;
 }
 
