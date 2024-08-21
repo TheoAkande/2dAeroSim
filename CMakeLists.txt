@@ -18,8 +18,9 @@ link_directories(${CMAKE_SOURCE_DIR}/lib)
 
 # Add source files
 add_executable(CPPOpenGL 
-    ${CMAKE_SOURCE_DIR}/src/main.cpp
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
+    ${CMAKE_SOURCE_DIR}/src/TextRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
 # Link the libraries

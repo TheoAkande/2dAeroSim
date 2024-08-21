@@ -11,6 +11,7 @@
 #include <SOIL2/soil2.h>
 #include <cstdlib>
 
+#include "TextRenderer.h"
 #include "Utils.h"
 
 using namespace std;
@@ -393,6 +394,8 @@ void display(GLFWwindow *window) {
     }
 
     // Show fps
+    TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::LEFT);
+    /*
     glUseProgram(textureRenderingProgram);
     int digits = 0;
     int digVal = 1;
@@ -437,14 +440,19 @@ void display(GLFWwindow *window) {
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, numbersTexture);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);        
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);  
+              
     }
+    */
 
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
 
 void init(void) {
+
+    TextRenderer::initTextRenderer(windowWidth, windowHeight);
+
     lastFPSUpdate = 0.0l;
 
     numbersTexture = Utils::loadTexture("assets/textures/numbers.jpg");
