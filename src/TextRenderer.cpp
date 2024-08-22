@@ -5,8 +5,8 @@ using namespace std;
 
 GLuint TextRenderer::numbersTexture;
 GLuint TextRenderer::textShaderProgram;
-GLuint TextRenderer::vao[numTextVAOs];
-GLuint TextRenderer::vbo[numTextVBOs];
+GLuint TextRenderer::tvao[numTextVAOs];
+GLuint TextRenderer::tvbo[numTextVBOs];
 float TextRenderer::numOffsetX;
 float TextRenderer::numOffsetY;
 float TextRenderer::boxCoords[8];
@@ -23,6 +23,10 @@ void TextRenderer::initTextRenderer(int screenWidth, int screenHeight)
 
     TextRenderer::textShaderProgram = Utils::createShaderProgram("shaders/textureVert.glsl", "shaders/textureFrag.glsl");
     numbersTexture = Utils::loadTexture("assets/textures/numbers.jpg");
+
+    glGenVertexArrays(numTextVAOs, tvao);
+    glBindVertexArray(tvao[0]);
+    glGenBuffers(numTextVBOs, tvbo);
 
     initialized = true;
 }
@@ -64,11 +68,11 @@ void TextRenderer::renderInt(int num, float x, float y, float scale, TextAlignme
         texCoords[6] = digTexCoord;
         texCoords[7] = 1.0f;
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, tvbo[0]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(boxCoords), &boxCoords[0], GL_STATIC_DRAW);
         glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
+        glBindBuffer(GL_ARRAY_BUFFER, tvbo[1]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), &texCoords[0], GL_STATIC_DRAW);
         glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(1);

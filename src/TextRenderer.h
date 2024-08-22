@@ -25,8 +25,8 @@ private:
     static bool initialized;
     static GLuint numbersTexture;
     static GLuint textShaderProgram;
-    static GLuint vao[numTextVAOs];
-    static GLuint vbo[numTextVBOs];
+    static GLuint tvao[numTextVAOs];
+    static GLuint tvbo[numTextVBOs];
     static float numOffsetX, numOffsetY;
     static float boxCoords[8];
     static float texCoords[8];
