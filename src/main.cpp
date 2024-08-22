@@ -409,6 +409,10 @@ void buttonClick(void *param) {
     return;
 }
 
+void switchSimulationState(void *param) {
+    doSimulation = !doSimulation;
+}
+
 void init(void) {
 
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
@@ -416,10 +420,9 @@ void init(void) {
 
     myFirstButton = new Button(500, 1300, 300, 150, false, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
-    mySecondButton = new Button(1000, 1300, 300, 150, true, buttonClick, nullptr);
-    mySecondButton->withBaseTexture("assets/textures/pauseSimulation.jpg");
-    mySecondButton->withClickTexture("assets/textures/resumeSimulation.jpg");
-    mySecondButton->withHoverTexture("assets/textures/test.jpg");
+    mySecondButton = new Button(1000, 1300, 300, 150, true, switchSimulationState, nullptr);
+    mySecondButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
+    mySecondButton->withClickTexture("assets/textures/pauseSimulation.jpg");
 
     lastFPSUpdate = 0.0l;
     curFPS = 1.0l;
@@ -533,12 +536,6 @@ double runFrame(GLFWwindow *window, double currentTime) {
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
         yForce = constantForce.second - force;
     }
-    if (!glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-        spaceHeld = false;
-    } else {
-        if (!spaceHeld) doSimulation = !doSimulation;
-        spaceHeld = true;
-    } 
     if (!doSimulation) {
         return -1;
     }
