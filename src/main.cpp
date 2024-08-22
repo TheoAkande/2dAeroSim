@@ -12,6 +12,7 @@
 #include <cstdlib>
 
 #include "TextRenderer.h"
+#include "Button.h"
 #include "Utils.h"
 
 using namespace std;
@@ -127,6 +128,7 @@ int objectsOffset[numObjects];
 int numEdgesTotal = 0;
 int objectCounter = 0;
 double curFPS;
+Button *myFirstButton, *mySecondButton;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -392,15 +394,35 @@ void display(GLFWwindow *window) {
     // Show fps
     TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::LEFT);
 
+    // Draw buttons
+    double xpos, ypos;
+    glfwGetCursorPos(window, &xpos, &ypos);
+    bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
+
     glfwSwapBuffers(window);
     glfwPollEvents();
+}
+
+void buttonClick(void *param) {
+    cout << "click!" << endl;
+    return;
 }
 
 void init(void) {
 
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
+    Button::initButtons(windowWidth, windowHeight);
+
+    myFirstButton = new Button(500, 1300, 300, 150, false, buttonClick, nullptr);
+    myFirstButton->withHoverTexture("assets/textures/test.jpg");
+    mySecondButton = new Button(1000, 1300, 300, 150, true, buttonClick, nullptr);
+    mySecondButton->withBaseTexture("assets/textures/pauseSimulation.jpg");
+    mySecondButton->withClickTexture("assets/textures/resumeSimulation.jpg");
+    mySecondButton->withHoverTexture("assets/textures/test.jpg");
 
     lastFPSUpdate = 0.0l;
+    curFPS = 1.0l;
 
     numbersTexture = Utils::loadTexture("assets/textures/numbers.jpg");
 

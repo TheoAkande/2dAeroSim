@@ -15,8 +15,7 @@ bool TextRenderer::initialized = false;
 
 void TextRenderer::initTextRenderer(int screenWidth, int screenHeight)
 {
-    if (initialized)
-        return;
+    if (initialized) return;
 
     numOffsetX = 20.0f / (float)screenWidth;
     numOffsetY = 30.0f / (float)screenHeight;

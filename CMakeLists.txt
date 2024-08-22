@@ -20,6 +20,7 @@ link_directories(${CMAKE_SOURCE_DIR}/lib)
 add_executable(CPPOpenGL 
     ${CMAKE_SOURCE_DIR}/src/Utils.cpp
     ${CMAKE_SOURCE_DIR}/src/TextRenderer.cpp
+    ${CMAKE_SOURCE_DIR}/src/Button.cpp
     ${CMAKE_SOURCE_DIR}/src/main.cpp
 )
 
