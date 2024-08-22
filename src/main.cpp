@@ -35,7 +35,7 @@ using namespace std;
 #define numChunksY 32
 #define ppt 1.5f
 
-#define numVBOs 4
+#define numVBOs 2
 #define numVAOs 1
 #define numCBs 6
 #define workGroupSize 64
@@ -87,10 +87,6 @@ float *curOutBuffer;
 float buffer1[numParticlesX * numParticlesY * numParticleFloats];
 float buffer2[numParticlesX * numParticlesY * numParticleFloats];
 float xForce, yForce = 0.0f;
-float boxCoords[8];
-float texCoords[8];
-
-float fpsOffsetX, fpsOffsetY;
 
 struct Particle {
     float x, y;
@@ -395,55 +391,6 @@ void display(GLFWwindow *window) {
 
     // Show fps
     TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::LEFT);
-    /*
-    glUseProgram(textureRenderingProgram);
-    int digits = 0;
-    int digVal = 1;
-    int intFPS = (int)curFPS;
-    while (intFPS / digVal > 0) {
-        digits++;
-        digVal *= 10;
-    }
-    float digitBaseY = FPSy - fpsOffsetY;
-    for (int i = 0; i < digits; i++) {
-        digVal /= 10;
-        int intDigit = intFPS / digVal;
-        intFPS = intFPS % digVal;
-        float digitBaseX = FPSx + (float)i * fpsOffsetX;
-        float digTexCoord = intDigit * 0.1f;
-        boxCoords[0] = digitBaseX; 
-        boxCoords[1] = digitBaseY;
-        boxCoords[2] = digitBaseX + fpsOffsetX;
-        boxCoords[3] = digitBaseY;
-        boxCoords[4] = digitBaseX + fpsOffsetX;
-        boxCoords[5] = digitBaseY + fpsOffsetY;
-        boxCoords[6] = digitBaseX;
-        boxCoords[7] = digitBaseY + fpsOffsetY;
-
-        texCoords[0] = digTexCoord;
-        texCoords[1] = 0.0f;
-        texCoords[2] = digTexCoord + 0.1f;
-        texCoords[3] = 0.0f;
-        texCoords[4] = digTexCoord + 0.1f;
-        texCoords[5] = 1.0f;
-        texCoords[6] = digTexCoord;
-        texCoords[7] = 1.0f;
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(boxCoords), &boxCoords[0], GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(texCoords), &texCoords[0], GL_STATIC_DRAW);
-        glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(1);
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, numbersTexture);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);  
-              
-    }
-    */
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -456,9 +403,6 @@ void init(void) {
     lastFPSUpdate = 0.0l;
 
     numbersTexture = Utils::loadTexture("assets/textures/numbers.jpg");
-
-    fpsOffsetX = 40.0f / (float)windowWidth;
-    fpsOffsetY = 60.0f / (float)windowHeight;
 
     scaleX = (float)simulationWidth / (float)windowWidth;
     scaleY = (float)simulationHeight / (float)windowHeight;
