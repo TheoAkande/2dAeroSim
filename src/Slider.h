@@ -15,6 +15,12 @@ using namespace std;
 #define numSliderVAOs 1
 #define numSliderVBOs 1
 
+enum class SliderType
+{
+    VERTICAL,
+    HORIZONTAL
+};
+
 class Slider
 {
     private:
@@ -25,6 +31,7 @@ class Slider
         GLuint svao[numSliderVAOs];
         GLuint svbo[numSliderVBOs];
         bool active;
+        SliderType type;
         void drawSlider(void);
         void updateSlider(bool click, int mouseX, int mouseY);
 
@@ -33,7 +40,10 @@ class Slider
         static bool initialized;
         static int screenWidth, screenHeight;
     public:
-        Slider(float x, float y, float width, float height, float initialValue, glm::vec4 barColour, glm::vec4 baseColour);
+        Slider(
+            float x, float y, float width, float height, float initialValue, 
+            glm::vec4 barColour, glm::vec4 baseColour,
+            SliderType type);
         float getValue(void);
         
         static void initSliders(int screenWidth, int screenHeight);
