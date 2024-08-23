@@ -29,10 +29,11 @@ private:
     float buttonCoords[8];
     float buttonX, buttonY;
     int buttonXAbs, buttonYAbs, buttonWidth, buttonHeight;
-    bool clicked, clickHeld;
+    bool clickHeld;
     bool hasBaseTexture, hasHoverTexture, hasClickTexture;
     std::function<void (void*)> onClick;
     void *clickData;
+    bool active;
     void drawButton(GLuint texture);
     virtual void updateButton(bool click, int mouseX, int mouseY);
 public:
@@ -40,6 +41,8 @@ public:
     Button *withBaseTexture(const char *texture);
     Button *withHoverTexture(const char *texture);
     Button *withClickTexture(const char *texture);
+    void setActive(void);
+    void setInactive(void);
     static void initButtons(int screenWidth, int screenHeight);
     static void update(bool click, int mouseX, int mouseY);
 

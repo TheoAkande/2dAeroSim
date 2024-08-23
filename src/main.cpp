@@ -421,6 +421,7 @@ void init(void) {
     myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
     myFirstButton->withClickTexture("assets/textures/numbers.jpg");
+    myFirstButton->setInactive();
     mySecondButton = new ToggleButton(1000, 1300, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
     mySecondButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
     mySecondButton->withClickTexture("assets/textures/pauseSimulation.jpg");

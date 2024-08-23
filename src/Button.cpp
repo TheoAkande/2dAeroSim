@@ -35,16 +35,15 @@ void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
     bool click = hover && clickOn;
 
     if (click && !this->clickHeld) {
-        this->clicked = true;
         this->onClick(clickData);
     }
     
     GLuint activeTexture = this->hasBaseTexture ? this->baseTexture : Button::emptyTexture;
 
-    if (hover && this->hasHoverTexture) {
-        activeTexture = this->hoverTexture;
-    } else if (this->clicked && this->hasClickTexture) {
+    if (click && this->hasClickTexture) {
         activeTexture = this->clickTexture;
+    } else if (hover && this->hasHoverTexture) {
+        activeTexture = this->hoverTexture;
     }
 
     this->clickHeld = clickOn;
@@ -83,7 +82,7 @@ Button::Button(int x, int y, int width, int height, std::function<void (void*)> 
     this->hasBaseTexture = false;
     this->hasClickTexture = false;
     this->hasHoverTexture = false;
-    this->clicked = false;
+    this->active = true;
 
     float decimalWidth = (width / (float)Button::screenWidth) * 2.0f;
     float decimalHeight = (height / (float)Button::screenHeight) * 2.0f;
@@ -131,9 +130,17 @@ Button *Button::withClickTexture(const char *texture) {
     return this;
 }
 
+void Button::setActive(void) {
+    this->active = true;
+}
+
+void Button::setInactive(void) {
+    this->active = false;
+}
+
 void Button::update(bool click, int mouseX, int mouseY) {
     for (int i = 0; i < Button::buttons.size(); i++) {
-        Button::buttons.at(i)->updateButton(click, mouseX, mouseY);
+        if (Button::buttons.at(i)->active) Button::buttons.at(i)->updateButton(click, mouseX, mouseY);
     }
 }
 
