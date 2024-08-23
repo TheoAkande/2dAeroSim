@@ -29,16 +29,34 @@ private:
     float buttonCoords[8];
     float buttonX, buttonY;
     int buttonXAbs, buttonYAbs, buttonWidth, buttonHeight;
-    bool toggle, clicked, clickHeld;
+    bool clicked, clickHeld;
     bool hasBaseTexture, hasHoverTexture, hasClickTexture;
     std::function<void (void*)> onClick;
     void *clickData;
-    void updateButton(bool click, int mouseX, int mouseY);
+    void drawButton(GLuint texture);
+    virtual void updateButton(bool click, int mouseX, int mouseY);
 public:
-	Button(int x, int y, int width, int height, bool toggle, std::function<void (void*)> onClick, void *clickData);
+	Button(int x, int y, int width, int height, std::function<void (void*)> onClick, void *clickData);
     Button *withBaseTexture(const char *texture);
     Button *withHoverTexture(const char *texture);
     Button *withClickTexture(const char *texture);
     static void initButtons(int screenWidth, int screenHeight);
     static void update(bool click, int mouseX, int mouseY);
+
+    friend class ToggleButton;
+};
+
+class ToggleButton : public Button
+{
+private:
+    bool toggled;
+    std::function<void (void*)> toggleOff;
+    void *toggleOffData;
+    void updateButton(bool clickOn, int mouseX, int mouseY) override;
+public:
+    ToggleButton(
+        int x, int y, int width, int height, 
+        std::function<void (void*)> onToggleOn, void *toggleOnData, 
+        std::function<void (void*)> onToggleOff, void *toggleOffData
+    );
 };

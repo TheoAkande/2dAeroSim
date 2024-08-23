@@ -418,9 +418,10 @@ void init(void) {
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
     Button::initButtons(windowWidth, windowHeight);
 
-    myFirstButton = new Button(500, 1300, 300, 150, false, buttonClick, nullptr);
+    myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
-    mySecondButton = new Button(1000, 1300, 300, 150, true, switchSimulationState, nullptr);
+    myFirstButton->withClickTexture("assets/textures/numbers.jpg");
+    mySecondButton = new ToggleButton(1000, 1300, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
     mySecondButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
     mySecondButton->withClickTexture("assets/textures/pauseSimulation.jpg");
 

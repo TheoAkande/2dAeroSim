@@ -10,6 +10,23 @@ float Button::textureCoords[8];
 GLuint Button::emptyTexture;
 GLuint Button::buttonShaderProgram;
 
+void Button::drawButton(GLuint texture) {
+    glUseProgram(Button::buttonShaderProgram);
+
+    glBindBuffer(GL_ARRAY_BUFFER, this->bvbo[0]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(this->buttonCoords), &(this->buttonCoords[0]), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, this->bvbo[1]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Button::textureCoords), &(this->textureCoords[0]), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(1);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
 void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
     bool hover = 
         this->buttonXAbs <= mouseX && buttonXAbs + buttonWidth >= mouseX &&
@@ -17,14 +34,8 @@ void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
 
     bool click = hover && clickOn;
 
-    bool doClick = click && !this->clickHeld;
-
-    if (doClick) {
-        if (this->toggle) {
-            this->clicked = !this->clicked;
-        } else {
-            this->clicked = true;
-        }
+    if (click && !this->clickHeld) {
+        this->clicked = true;
         this->onClick(clickData);
     }
     
@@ -38,20 +49,7 @@ void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
 
     this->clickHeld = clickOn;
 
-    glUseProgram(buttonShaderProgram);
-
-    glBindBuffer(GL_ARRAY_BUFFER, this->bvbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(this->buttonCoords), &(this->buttonCoords[0]), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, this->bvbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Button::textureCoords), &(this->textureCoords[0]), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(1);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, activeTexture);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    this->drawButton(activeTexture);
 }
 
 void Button::initButtons(int screenWidth, int screenHeight) {
@@ -73,14 +71,13 @@ void Button::initButtons(int screenWidth, int screenHeight) {
     Button::initialized = true;
 }
 
-Button::Button(int x, int y, int width, int height, bool toggle, std::function<void (void*)> onClick, void *clickData) {
+Button::Button(int x, int y, int width, int height, std::function<void (void*)> onClick, void *clickData) {
     this->buttonXAbs = x;
     this->buttonYAbs = y;
     this->buttonX = (x / (float)Button::screenWidth) * 2.0f - 1.0f;
     this->buttonY = (y / (float)Button::screenHeight) * 2.0f - 1.0f;
     this->buttonWidth = width;
     this->buttonHeight = height;
-    this->toggle = toggle;
     this->onClick = onClick;
     this->clickData = clickData;
     this->hasBaseTexture = false;
@@ -138,4 +135,41 @@ void Button::update(bool click, int mouseX, int mouseY) {
     for (int i = 0; i < Button::buttons.size(); i++) {
         Button::buttons.at(i)->updateButton(click, mouseX, mouseY);
     }
+}
+
+ToggleButton::ToggleButton(
+    int x, int y, int width, int height, 
+    std::function<void (void*)> onToggleOn, void *toggleOnData, 
+    std::function<void (void*)> onToggleOff, void *toggleOffData
+) : Button(x, y, width, height, onToggleOn, toggleOnData) {
+    this->toggleOff = onToggleOff;
+    this->toggleOffData = toggleOffData;
+    this->toggled = false;
+}
+
+void ToggleButton::updateButton(bool clickOn, int mouseX, int mouseY) {
+    bool hover = 
+        this->buttonXAbs <= mouseX && buttonXAbs + buttonWidth >= mouseX &&
+        this->buttonYAbs <= mouseY && buttonYAbs + buttonHeight >= mouseY;
+
+    bool click = hover && clickOn;
+
+    if (click && !this->clickHeld) {
+        this->toggled = !this->toggled;
+        if (this->toggled) {
+            this->onClick(clickData);
+        } else {
+            this->toggleOff(toggleOffData);
+        }
+    }
+    
+    GLuint activeTexture = this->hasBaseTexture ? this->baseTexture : Button::emptyTexture;
+
+    if (this->toggled && this->hasClickTexture) {
+        activeTexture = this->clickTexture;
+    }
+
+    this->clickHeld = clickOn;
+
+    this->drawButton(activeTexture);
 }
