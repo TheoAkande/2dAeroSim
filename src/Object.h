@@ -31,8 +31,8 @@ class Object
         float x, y;
         float elasticity;
         glm::vec4 colour;
-        GLuint bvao[numObjectVAOs];
-        GLuint bvbo[numObjectVBOs];
+        GLuint ovao[numObjectVAOs];
+        GLuint ovbo[numObjectVBOs];
         bool active;
         void drawObject(void);
 
