@@ -42,6 +42,11 @@ void TextRenderer::renderInt(int num, float x, float y, float scale, TextAlignme
         digits++;
         digVal *= 10;
     }
+
+    if (alignment == TextAlignment::RIGHT) {
+        x -= digits * TextRenderer::numOffsetX * scale;
+    }
+
     float digitBaseY = y - TextRenderer::numOffsetY * scale;
     for (int i = 0; i < digits; i++) {
         digVal /= 10;

@@ -46,7 +46,7 @@ using namespace std;
 #define simulationWidth 1000
 #define simulationHeight 1000
 
-#define FPSx -0.95f
+#define FPSx -0.92f
 #define FPSy 0.95f
 
 #define numObjects 3
@@ -347,7 +347,7 @@ void setupComputeBuffers(void) {
     glBufferData(GL_SHADER_STORAGE_BUFFER, numEdgesTotal * numEdgeFloats * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
 
-void display(GLFWwindow *window) {
+void baseDisplay(GLFWwindow *window) {
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
     // glfwGetFramebufferSize(window, &width, &height);
@@ -392,7 +392,7 @@ void display(GLFWwindow *window) {
     }
 
     // Show fps
-    TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::LEFT);
+    TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::RIGHT);
 
     // Draw buttons
     double xpos, ypos;
@@ -516,7 +516,7 @@ double runFrame(GLFWwindow *window, double currentTime) {
         lastFrames = framesTotal;
     }
 
-    display(window);
+    baseDisplay(window);
 
     if (doSimulation) {
         runComputeShader();
