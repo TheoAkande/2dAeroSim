@@ -8,6 +8,7 @@ int Object::screenWidth, Object::screenHeight;
 float Object::scaleFactor;
 int Object::simulationWidth, Object::simulationHeight;
 float Object::scaleX, Object::scaleY;
+int Object::numObjects = 0;
 
 Object::Object(const char *path) {
     if (!Object::initialized) {
@@ -67,6 +68,8 @@ Object::Object(const char *path) {
     this->viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
     this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
 
+    Object::numObjects++;
+
     Object::objects.push_back(this);
 
     this->setupDraw();
@@ -105,6 +108,8 @@ Object::Object(vector<glm::vec2> *vertices) {
     this->colour[2] = 0.0f;
     this->viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
     this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
+
+    Object::numObjects++;
 
     Object::objects.push_back(this);
 
@@ -176,6 +181,26 @@ void Object::printObject() {
     for (int i = 0; i < this->vertices->size(); i++) {
         cout << "Vertex " << i << ": " << this->vertices->at(i).x << ", " << this->vertices->at(i).y << endl;
     }
+}
+
+int Object::loadAllEdges(vector<float> *edges) {
+    int total = 0;
+    for (int i = 0; i < Object::objects.size(); i++) {
+        Object *o = Object::objects.at(i);
+        if (o->active) {
+            for (int j = 0; j < o->numEdges; j++) {
+                edges->push_back(o->edges->at(j).x1);
+                edges->push_back(o->edges->at(j).y1);
+                edges->push_back(o->edges->at(j).x2);
+                edges->push_back(o->edges->at(j).y2);
+                edges->push_back(o->edges->at(j).nx);
+                edges->push_back(o->edges->at(j).ny);
+                edges->push_back(o->edges->at(j).elasticity);
+                total++;
+            }
+        }
+    }
+    return total;
 }
 
 void Object::initObjects(int screenWidth, int screenHeight, float scaleFactor, float simulationWidth, float simulationHeight) {

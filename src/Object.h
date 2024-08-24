@@ -15,6 +15,7 @@ using namespace std;
 #define numObjectVAOs 1
 #define numObjectVBOs 1
 #define edgeElasticity 0.3f
+#define numEdgeFloats 7
 
 struct Line {
     float x1, y1;
@@ -58,6 +59,8 @@ class Object
         void setInactive(void);
         void printObject(void);
         
+        static int numObjects;
+        static int loadAllEdges(vector<float> *edges);
         static void initObjects(int screenWidth, int screenHeight, float scaleFactor, float simulationWidth, float simulationHeight);
         static void update(void);
 };

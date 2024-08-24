@@ -13,6 +13,7 @@
 
 #include "TextRenderer.h"
 #include "Button.h"
+#include "Object.h"
 #include "Utils.h"
 
 using namespace std;
@@ -26,9 +27,7 @@ using namespace std;
 #define vMax 5000.0f
 #define colourVMax 300.0f
 #define numParticleFloats 8
-#define numEdgeFloats 7
 #define force 10000.0f
-#define edgeElasticity 0.5f
 #define particleElasticity 0.975f
 
 #define scaleFactor 1080.0f
@@ -49,16 +48,10 @@ using namespace std;
 #define FPSx -0.92f
 #define FPSy 0.95f
 
-#define numObjects 3
-const char *assets[] = {"assets/objects/inverted.2dObj", "assets/objects/box.2dObj", "assets/objects/triangle.2dObj"};
-
 pair<float, float> constantForce = {0.0f, -20000.0f};
 
 bool doSimulation = false;
 bool spaceHeld = false;
-float scaleX;
-float scaleY;
-glm::mat4 viewMat;
 
 double pastTime = 0.0;
 double deltaTime = 0.0;
@@ -66,8 +59,11 @@ double lastFPSUpdate;
 int frames;
 int framesTotal;
 int lastFrames;
+glm::mat4 viewMat;
+float scaleX, scaleY;
 
 int numParticles = numParticlesX * numParticlesY;
+int numEdgesTotal;
 
 // for window
 int height = 1000;
@@ -82,7 +78,7 @@ GLuint  floatNumLoc, romLoc, vMaxLoc, dtLoc, xForceLoc, yForceLoc, numEdgesLoc,
         sfLoc, tvmsLoc, chunkWdithLoc, chunkHeightLoc, numChunksXLoc, numChunksYLoc,
         pptLoc, pfLoc, eeLoc, peLoc, vMatLoc;
 GLuint computeBuffers[numCBs];
-GLuint particleRenderingProgram, objectRenderingProgram, computeProgram, textureRenderingProgram;
+GLuint particleRenderingProgram, computeProgram, textureRenderingProgram;
 float *curInBuffer;
 float *curOutBuffer;
 float buffer1[numParticlesX * numParticlesY * numParticleFloats];
@@ -97,22 +93,6 @@ struct Particle {
     int chunk;
 };
 
-struct Line {
-    float x1, y1;
-    float x2, y2;
-    float nx, ny;
-    float elasticity;
-};
-
-struct Object {
-    vector<glm::vec2> *vertices;
-    vector<Line> *edges;
-    float mass, scale;
-    float x, y;
-    float elasticity;
-    int numEdges;
-};
-
 struct Chunks {
     int chunks[numParticlesX * numParticlesY];
     int cumChunkSizes[numChunksX * numChunksY];
@@ -122,11 +102,7 @@ struct Chunks {
 };
 
 Particle particles[numParticlesX * numParticlesY];
-Object objects[numObjects];
 Chunks chunks = Chunks();
-int objectsOffset[numObjects];
-int numEdgesTotal = 0;
-int objectCounter = 0;
 double curFPS;
 Button *myFirstButton, *mySecondButton;
 
@@ -157,74 +133,6 @@ void updateChunkData(float particle_buffer[]) {
             chunks.chunks[chunks.cumChunkSizes[chunk] + chunks.chunksCounter[chunk]] = i;
             chunks.chunksCounter[chunk]++;
         }
-    }
-}
-
-Object load2dObject(const char *filePath) {
-
-    Object newObject;
-    vector<glm::vec2> *vertices = new vector<glm::vec2>();
-    vector<Line> *edges = new vector<Line>();
-
-    newObject.vertices = vertices;
-    newObject.x = 0.0f;
-    newObject.y = 0.0f;
-    newObject.mass = 1.0f;
-    newObject.scale = 1.0f;
-    newObject.elasticity = edgeElasticity;
-
-    int nv = 0;
-
-    ifstream fileStream(filePath, ios::in);
-    string line = "";
-    while (!fileStream.eof()) {
-        getline(fileStream, line);
-        if (line.c_str()[0] == 'v') {
-            glm::vec2 vertex;
-            sscanf(line.c_str(), "v %f %f", &vertex.x, &vertex.y);
-            vertices->push_back(glm::vec2(vertex.x * scaleFactor, vertex.y * scaleFactor));
-            nv++;
-        } else if (line.c_str()[0] == 'm') {
-            sscanf(line.c_str(), "m %f", &newObject.mass);
-        } else if (line.c_str()[0] == 's') {
-            sscanf(line.c_str(), "s %f", &newObject.scale);
-        } else if (line.c_str()[0] == 'e') {
-            sscanf(line.c_str(), "e %f", &newObject.elasticity, &newObject.elasticity);
-        }
-    }
-    fileStream.close();
-
-    for (int i = 0; i < vertices->size() - 1; i++) {
-        Line edge;
-        edge.x1 = vertices->at(i).x;
-        edge.y1 = vertices->at(i).y;
-        edge.x2 = vertices->at((i + 1)).x;
-        edge.y2 = vertices->at((i + 1)).y;
-        edge.nx = edge.y1 - edge.y2;
-        edge.ny = edge.x2 - edge.x1;
-        edge.elasticity = newObject.elasticity;
-        edges->push_back(edge);
-    }
-
-    newObject.numEdges = nv - 1;
-    newObject.edges = edges;
-
-    if (objectCounter == 0) {
-        objectsOffset[0] = 0;
-    } else {
-        objectsOffset[objectCounter] = objectsOffset[objectCounter - 1] + objects[objectCounter - 1].vertices->size();
-    }
-    objectCounter++;
-
-    return newObject;
-}
-
-void printObject(Object object) {
-    cout << "Mass: " << object.mass << endl;
-    cout << "Scale: " << object.scale << endl;
-    cout << "Position: (" << object.x << ", " << object.y << ")" << endl;
-    for (int i = 0; i < object.vertices->size(); i++) {
-        cout << "Vertex " << i << ": " << object.vertices->at(i).x << ", " << object.vertices->at(i).y << endl;
     }
 }
 
@@ -277,12 +185,12 @@ void setupScene(void) {
         curInBuffer[i * numParticleFloats + 7] = static_cast<float>(particles[i].chunk);
     }
 
-    for (int j = 0; j < numObjects; j++) {
-        for (int i = 0; i < objects[j].vertices->size(); i++) {
-            objectLines.push_back(objects[j].vertices->at(i).x);
-            objectLines.push_back(objects[j].vertices->at(i).y);
-        }
-    }
+    // for (int j = 0; j < numObjects; j++) {
+    //     for (int i = 0; i < objects[j].vertices->size(); i++) {
+    //         objectLines.push_back(objects[j].vertices->at(i).x);
+    //         objectLines.push_back(objects[j].vertices->at(i).y);
+    //     }
+    // }
 
     glGenVertexArrays(numVAOs, vao);
     glBindVertexArray(vao[0]);
@@ -293,8 +201,8 @@ void setupScene(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
 
     // Objects VBO
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, objectLines.size() * sizeof(float), &objectLines[0], GL_STATIC_DRAW);
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    // glBufferData(GL_ARRAY_BUFFER, objectLines.size() * sizeof(float), &objectLines[0], GL_STATIC_DRAW);
 }
 
 void bindComputeBuffers(void) {
@@ -331,18 +239,19 @@ void setupComputeBuffers(void) {
 
     // Doesn't need to be rebound each time (yet at least)
     vector<float> objectEdges;
-    for (int j = 0; j < numObjects; j++) {
-        for (int i = 0; i < objects[j].numEdges; i++) {
-            objectEdges.push_back(objects[j].edges->at(i).x1);
-            objectEdges.push_back(objects[j].edges->at(i).y1);
-            objectEdges.push_back(objects[j].edges->at(i).x2);
-            objectEdges.push_back(objects[j].edges->at(i).y2);
-            objectEdges.push_back(objects[j].edges->at(i).nx);
-            objectEdges.push_back(objects[j].edges->at(i).ny);
-            objectEdges.push_back(objects[j].edges->at(i).elasticity);
-        }
-        numEdgesTotal += objects[j].numEdges;
-    }
+    numEdgesTotal = Object::loadAllEdges(&objectEdges);
+    // for (int j = 0; j < numObjects; j++) {
+    //     for (int i = 0; i < objects[j].numEdges; i++) {
+    //         objectEdges.push_back(objects[j].edges->at(i).x1);
+    //         objectEdges.push_back(objects[j].edges->at(i).y1);
+    //         objectEdges.push_back(objects[j].edges->at(i).x2);
+    //         objectEdges.push_back(objects[j].edges->at(i).y2);
+    //         objectEdges.push_back(objects[j].edges->at(i).nx);
+    //         objectEdges.push_back(objects[j].edges->at(i).ny);
+    //         objectEdges.push_back(objects[j].edges->at(i).elasticity);
+    //     }
+    //     numEdgesTotal += objects[j].numEdges;
+    // }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[2]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numEdgesTotal * numEdgeFloats * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
@@ -375,21 +284,21 @@ void baseDisplay(GLFWwindow *window) {
     glDrawArrays(GL_POINTS, 0, numParticlesX * numParticlesY);
 
     // Draw object
-    glUseProgram(objectRenderingProgram);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    // glUseProgram(objectRenderingProgram);
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
 
-    sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
-    glUniform1f(sfLoc, scaleFactor);
-    vMatLoc = glGetUniformLocation(objectRenderingProgram, "viewMat");
-    glUniformMatrix4fv(vMatLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
+    // sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
+    // glUniform1f(sfLoc, scaleFactor);
+    // vMatLoc = glGetUniformLocation(objectRenderingProgram, "viewMat");
+    // glUniformMatrix4fv(vMatLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
 
-    for (int i = 0; i < numObjects; i++) {
-        glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)(2 * sizeof(float) * objectsOffset[i]));
-        glEnableVertexAttribArray(0);
-        glEnable(GL_DEPTH_TEST);
-        glDepthFunc(GL_LEQUAL);
-        glDrawArrays(GL_LINE_STRIP, 0, objects[i].vertices->size());
-    }
+    // for (int i = 0; i < numObjects; i++) {
+    //     glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)(2 * sizeof(float) * objectsOffset[i]));
+    //     glEnableVertexAttribArray(0);
+    //     glEnable(GL_DEPTH_TEST);
+    //     glDepthFunc(GL_LEQUAL);
+    //     glDrawArrays(GL_LINE_STRIP, 0, objects[i].vertices->size());
+    // }
 
     // Show fps
     TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::RIGHT);
@@ -435,12 +344,12 @@ void init(void) {
     scaleY = (float)simulationHeight / (float)windowHeight;
     viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
 
-    for (int i = 0; i < numObjects; i++) {
-        objects[i] = load2dObject(assets[i]);
-    }
+    // for (int i = 0; i < numObjects; i++) {
+    //     objects[i] = load2dObject(assets[i]);
+    // }
 
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
-    objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
+    // objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
     textureRenderingProgram = Utils::createShaderProgram("shaders/textureVert.glsl", "shaders/textureFrag.glsl");
     computeProgram = Utils::createShaderProgram("shaders/collisionComputeShader.glsl");
 
@@ -576,7 +485,7 @@ int writeBenchmarks(double avgFrameRate) {
         outFile << "Benchmarks" << endl;
         outFile << "Particles:    " << numParticlesX * numParticlesY << endl;
         outFile << "Chunks:       " << numChunksX * numChunksY << endl;
-        outFile << "Objects:      " << numObjects << endl;
+        outFile << "Objects:      " << Object::numObjects << endl;
         outFile << "Object Edges: " << numEdgesTotal << endl;
         outFile << "--------------" << endl;
         outFile << "Frame Rate:   " << avgFrameRate << endl;
