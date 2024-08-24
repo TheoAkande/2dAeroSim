@@ -105,6 +105,7 @@ Particle particles[numParticlesX * numParticlesY];
 Chunks chunks = Chunks();
 double curFPS;
 Button *myFirstButton, *mySecondButton;
+Object *square, *triangle, *inverted;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -308,6 +309,7 @@ void baseDisplay(GLFWwindow *window) {
     glfwGetCursorPos(window, &xpos, &ypos);
     bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
+    Object::update();
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -326,6 +328,7 @@ void init(void) {
 
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
     Button::initButtons(windowWidth, windowHeight);
+    Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);
 
     myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
@@ -334,6 +337,14 @@ void init(void) {
     mySecondButton = new ToggleButton(1000, 1300, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
     mySecondButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
     mySecondButton->withClickTexture("assets/textures/pauseSimulation.jpg");
+
+    square = new Object("assets/objects/box.2dObj");
+    triangle = new Object("assets/objects/triangle.2dObj");
+    // square->setInactive();
+    inverted = new Object("assets/objects/inverted.2dObj");
+    // inverted->setInactive();
+
+    triangle->setColour(0.0f, 1.0f, 0.0f);
 
     lastFPSUpdate = 0.0l;
     curFPS = 1.0l;

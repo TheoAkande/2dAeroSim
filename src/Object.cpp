@@ -66,7 +66,7 @@ Object::Object(const char *path) {
     this->colour[1] = 0.0f;
     this->colour[2] = 0.0f;
     this->viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
-    this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
+    // this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
 
     Object::numObjects++;
 
@@ -107,7 +107,7 @@ Object::Object(vector<glm::vec2> *vertices) {
     this->colour[1] = 0.0f;
     this->colour[2] = 0.0f;
     this->viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
-    this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
+    // this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
 
     Object::numObjects++;
 
@@ -129,11 +129,7 @@ void Object::setupDraw(void) {
 
 void Object::drawObject(void) {
     glUseProgram(Object::objectShaderProgram);
-
     glBindBuffer(GL_ARRAY_BUFFER, this->ovbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, this->vertices->size() * sizeof(float), this->vertices->data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
 
     GLuint sfLoc = glGetUniformLocation(Object::objectShaderProgram, "sf");
     glUniform1f(sfLoc, Object::scaleFactor);
@@ -142,7 +138,11 @@ void Object::drawObject(void) {
     GLuint colourLoc = glGetUniformLocation(Object::objectShaderProgram, "colourIn");
     glUniform3f(colourLoc, this->colour[0], this->colour[1], this->colour[2]);
 
-    glDrawArrays(GL_LINE_STRIP, 0, this->vertices->size());
+    glBufferData(GL_ARRAY_BUFFER, this->numVertices * sizeof(float) * 2, this->vertices->data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0);
+
+    glDrawArrays(GL_LINE_STRIP, 0, this->numVertices);
 }
 
 void Object::setMass(float mass) {
@@ -163,7 +163,7 @@ void Object::translate(float x, float y) {
     this->x += x;
     this->y += y;
     this->viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
-    this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
+    // this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
 }
 
 void Object::setActive(void) {
