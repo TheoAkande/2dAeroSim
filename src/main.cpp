@@ -35,7 +35,7 @@ using namespace std;
 #define numChunksY 32
 #define ppt 1.5f
 
-#define numVBOs 2
+#define numVBOs 1
 #define numVAOs 1
 #define numCBs 6
 #define workGroupSize 64
@@ -186,13 +186,6 @@ void setupScene(void) {
         curInBuffer[i * numParticleFloats + 7] = static_cast<float>(particles[i].chunk);
     }
 
-    // for (int j = 0; j < numObjects; j++) {
-    //     for (int i = 0; i < objects[j].vertices->size(); i++) {
-    //         objectLines.push_back(objects[j].vertices->at(i).x);
-    //         objectLines.push_back(objects[j].vertices->at(i).y);
-    //     }
-    // }
-
     glGenVertexArrays(numVAOs, vao);
     glBindVertexArray(vao[0]);
     glGenBuffers(numVBOs, vbo);
@@ -200,10 +193,6 @@ void setupScene(void) {
     // Particles VBO
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), &curInBuffer[0], GL_STATIC_DRAW);
-
-    // Objects VBO
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    // glBufferData(GL_ARRAY_BUFFER, objectLines.size() * sizeof(float), &objectLines[0], GL_STATIC_DRAW);
 }
 
 void bindComputeBuffers(void) {
@@ -241,18 +230,6 @@ void setupComputeBuffers(void) {
     // Doesn't need to be rebound each time (yet at least)
     vector<float> objectEdges;
     numEdgesTotal = Object::loadAllEdges(&objectEdges);
-    // for (int j = 0; j < numObjects; j++) {
-    //     for (int i = 0; i < objects[j].numEdges; i++) {
-    //         objectEdges.push_back(objects[j].edges->at(i).x1);
-    //         objectEdges.push_back(objects[j].edges->at(i).y1);
-    //         objectEdges.push_back(objects[j].edges->at(i).x2);
-    //         objectEdges.push_back(objects[j].edges->at(i).y2);
-    //         objectEdges.push_back(objects[j].edges->at(i).nx);
-    //         objectEdges.push_back(objects[j].edges->at(i).ny);
-    //         objectEdges.push_back(objects[j].edges->at(i).elasticity);
-    //     }
-    //     numEdgesTotal += objects[j].numEdges;
-    // }
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, computeBuffers[2]);
     glBufferData(GL_SHADER_STORAGE_BUFFER, numEdgesTotal * numEdgeFloats * sizeof(float), objectEdges.data(), GL_STATIC_DRAW);
 }
@@ -283,23 +260,6 @@ void baseDisplay(GLFWwindow *window) {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glDrawArrays(GL_POINTS, 0, numParticlesX * numParticlesY);
-
-    // Draw object
-    // glUseProgram(objectRenderingProgram);
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-
-    // sfLoc = glGetUniformLocation(objectRenderingProgram, "sf");
-    // glUniform1f(sfLoc, scaleFactor);
-    // vMatLoc = glGetUniformLocation(objectRenderingProgram, "viewMat");
-    // glUniformMatrix4fv(vMatLoc, 1, GL_FALSE, glm::value_ptr(viewMat));
-
-    // for (int i = 0; i < numObjects; i++) {
-    //     glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)(2 * sizeof(float) * objectsOffset[i]));
-    //     glEnableVertexAttribArray(0);
-    //     glEnable(GL_DEPTH_TEST);
-    //     glDepthFunc(GL_LEQUAL);
-    //     glDrawArrays(GL_LINE_STRIP, 0, objects[i].vertices->size());
-    // }
 
     // Show fps
     TextRenderer::renderInt((int)curFPS, FPSx, FPSy, 2.0f, TextAlignment::RIGHT);
