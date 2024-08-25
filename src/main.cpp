@@ -237,7 +237,6 @@ void setupComputeBuffers(void) {
 void baseDisplay(GLFWwindow *window) {
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
-    // glfwGetFramebufferSize(window, &width, &height);
 
     // Draw particles
     glUseProgram(particleRenderingProgram);
@@ -300,9 +299,7 @@ void init(void) {
 
     square = new Object("assets/objects/box.2dObj");
     triangle = new Object("assets/objects/triangle.2dObj");
-    // square->setInactive();
     inverted = new Object("assets/objects/inverted.2dObj");
-    // inverted->setInactive();
 
     triangle->setColour(0.0f, 1.0f, 0.0f);
 
@@ -315,12 +312,7 @@ void init(void) {
     scaleY = (float)simulationHeight / (float)windowHeight;
     viewMat = glm::scale(glm::mat4(1.0f), glm::vec3(scaleX, scaleY, 0.0f));
 
-    // for (int i = 0; i < numObjects; i++) {
-    //     objects[i] = load2dObject(assets[i]);
-    // }
-
     particleRenderingProgram = Utils::createShaderProgram("shaders/particleVert.glsl", "shaders/particleFrag.glsl");
-    // objectRenderingProgram = Utils::createShaderProgram("shaders/objectVert.glsl", "shaders/objectFrag.glsl");
     textureRenderingProgram = Utils::createShaderProgram("shaders/textureVert.glsl", "shaders/textureFrag.glsl");
     computeProgram = Utils::createShaderProgram("shaders/collisionComputeShader.glsl");
 
@@ -448,7 +440,7 @@ int writeBenchmarks(double avgFrameRate) {
     }
 
     // Create and open a text file
-    std::ofstream outFile(fileName);
+    ofstream outFile(fileName);
 
     // Check if the file was successfully opened
     if (outFile.is_open()) {
