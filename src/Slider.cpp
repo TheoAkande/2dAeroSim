@@ -89,14 +89,14 @@ Slider::Slider(
     this->type = type;
     this->active = true;
 
-    this->baseVert[0] = x;
-    this->baseVert[1] = y;
-    this->baseVert[2] = x + width;
-    this->baseVert[3] = y;
-    this->baseVert[4] = x + width;
-    this->baseVert[5] = y + height;
-    this->baseVert[6] = x;
-    this->baseVert[7] = y + height;
+    this->baseVert[0] = this->x;
+    this->baseVert[1] = this->y;
+    this->baseVert[2] = this->x + this->width;
+    this->baseVert[3] = this->y;
+    this->baseVert[4] = this->x + this->width;
+    this->baseVert[5] = this->y + this->height;
+    this->baseVert[6] = this->x;
+    this->baseVert[7] = this->y + this->height;
 
     glGenVertexArrays(numSliderVAOs, this->svao);
     glBindVertexArray(this->svao[0]);
