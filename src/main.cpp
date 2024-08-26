@@ -14,6 +14,7 @@
 #include "TextRenderer.h"
 #include "Button.h"
 #include "Object.h"
+#include "Slider.h"
 #include "Utils.h"
 
 using namespace std;
@@ -106,6 +107,7 @@ Chunks chunks = Chunks();
 double curFPS;
 Button *myFirstButton, *mySecondButton;
 Object *square, *triangle, *inverted;
+Slider *myFirstSlider, *mySecondSlider;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -269,6 +271,7 @@ void baseDisplay(GLFWwindow *window) {
     bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
     Object::update();
+    Slider::update(pressed, (int)xpos, windowHeight - (int)ypos);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -288,6 +291,7 @@ void init(void) {
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
     Button::initButtons(windowWidth, windowHeight);
     Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);
+    Slider::initSliders(windowWidth, windowHeight);
 
     myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
@@ -300,6 +304,9 @@ void init(void) {
     square = new Object("assets/objects/box.2dObj");
     triangle = new Object("assets/objects/triangle.2dObj");
     inverted = new Object("assets/objects/inverted.2dObj");
+
+    myFirstSlider = new Slider(0.0f, -0.8f, 0.1f, 0.3f, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::VERTICAL);
+    mySecondSlider = new Slider(0.5f, -0.8f, 0.3f, 0.1f, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::HORIZONTAL);
 
     triangle->setColour(0.0f, 1.0f, 0.0f);
 
