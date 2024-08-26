@@ -49,6 +49,6 @@ class Slider
             SliderType type);
         float getValue(void);
         
-        static void initSliders(int screenWidth, int screenHeight);
+        static void initSliders(void);
         static void update(bool click, int mouseX, int mouseY);
 };

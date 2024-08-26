@@ -4,7 +4,6 @@
 GLuint Slider::sliderShaderProgram;
 vector<Slider *> Slider::sliders;
 bool Slider::initialized = false;
-int Slider::screenWidth, Slider::screenHeight;
 
 void Slider::updateBar(void) {
     if (this->type == SliderType::HORIZONTAL) {
@@ -78,11 +77,14 @@ void Slider::updateSlider(bool click, int mouseX, int mouseY) {
 Slider::Slider(
     int x, int y, int width, int height, float initialValue, 
     glm::vec4 barColour, glm::vec4 baseColour,
-    SliderType type) {
+    SliderType type
+) {
+    Slider::initSliders();
+
     this->x = Utils::pixelToScreenX(x);
     this->y = Utils::pixelToScreenY(y);
-    this->width = ((float)width / (float)Slider::screenWidth) * 2.0f;
-    this->height = ((float)height / (float)Slider::screenHeight) * 2.0f;
+    this->width = Utils::pixelsToScreenWidth(width);
+    this->height = Utils::pixelsToScreenHeight(height);
     this->value = initialValue;
     this->barColour = barColour;
     this->baseColour = baseColour;
@@ -116,11 +118,8 @@ float Slider::getValue(void) {
     return this->value;
 }
 
-void Slider::initSliders(int screenWidth, int screenHeight) {
+void Slider::initSliders(void) {
     if (Slider::initialized) return;
-
-    Slider::screenWidth = screenWidth;
-    Slider::screenHeight = screenHeight;
 
     Slider::sliderShaderProgram = Utils::createShaderProgram("shaders/sliderVert.glsl", "shaders/sliderFrag.glsl");
 

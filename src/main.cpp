@@ -295,7 +295,6 @@ void init(void) {
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
     Button::initButtons(windowWidth, windowHeight);
     Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);
-    Slider::initSliders(windowWidth, windowHeight);
 
     myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
