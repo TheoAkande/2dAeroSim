@@ -25,8 +25,14 @@ public:
 	static float pixelToScreenX(int x);
 	static float pixelToScreenY(int y);
 
+	static float pixelsToScreenWidth(int w);
+	static float pixelsToScreenHeight(int h);
+
 	static int screenToPixelX(float x);
 	static int screenToPixelY(float y);
+
+	static int screenWidthToPixels(float w);
+	static int screenHeightToPixels(float h);
 
 	static void setScreenDimensions(int width, int height);
 
