@@ -53,6 +53,28 @@ void Slider::drawSlider(void) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+void Slider::updateSlider(bool click, int mouseX, int mouseY) {
+    if (click) {
+        float adjustedMouseX = ((float)mouseX / (float)Slider::screenWidth) * 2.0f - 1.0f;
+        float adjustedMouseY = -(((float)mouseY / (float)Slider::screenHeight) * 2.0f - 1.0f);
+        if (
+            adjustedMouseX >= this->x 
+            && adjustedMouseX <= this->x + this->width 
+            && adjustedMouseY >= this->y 
+            && adjustedMouseY <= this->y + this->height
+        ) {
+            this->value = this->type == SliderType::HORIZONTAL 
+                ? (adjustedMouseX - this->x) / this->width 
+                : (adjustedMouseY - this->y) / this->height;
+            if (this->value < 0.0f) this->value = 0.0f;
+            if (this->value > 1.0f) this->value = 1.0f;
+            this->updateBar();
+        } 
+    }
+
+    this->drawSlider();
+}
+
 Slider::Slider(
     float x, float y, float width, float height, float initialValue, 
     glm::vec4 barColour, glm::vec4 baseColour,
