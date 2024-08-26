@@ -31,6 +31,28 @@ void Slider::updateBar(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(this->barVert), &this->barVert[0], GL_STATIC_DRAW);
 }
 
+void Slider::drawSlider(void) {
+    glUseProgram(Slider::sliderShaderProgram);
+
+    glBindVertexArray(this->svao[0]);
+    glEnableVertexAttribArray(0);
+
+    GLuint colourLoc = glGetUniformLocation(Slider::sliderShaderProgram, "colourIn");
+    glUniform3f(colourLoc, this->baseColour[0], this->baseColour[1], this->baseColour[2]);
+
+    glBindBuffer(GL_ARRAY_BUFFER, this->svbo[0]);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+    glUniform3f(colourLoc, this->barColour[0], this->barColour[1], this->barColour[2]);
+
+    glBindBuffer(GL_ARRAY_BUFFER, this->svbo[1]);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
+
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+}
+
 Slider::Slider(
     float x, float y, float width, float height, float initialValue, 
     glm::vec4 barColour, glm::vec4 baseColour,
