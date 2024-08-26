@@ -55,8 +55,8 @@ void Slider::drawSlider(void) {
 
 void Slider::updateSlider(bool click, int mouseX, int mouseY) {
     if (click) {
-        float adjustedMouseX = ((float)mouseX / (float)Slider::screenWidth) * 2.0f - 1.0f;
-        float adjustedMouseY = (((float)mouseY / (float)Slider::screenHeight) * 2.0f - 1.0f);
+        float adjustedMouseX = Utils::pixelToScreenX(mouseX);
+        float adjustedMouseY = Utils::pixelToScreenY(mouseY);
         if (
             adjustedMouseX >= this->x 
             && adjustedMouseX <= this->x + this->width 
@@ -79,8 +79,8 @@ Slider::Slider(
     int x, int y, int width, int height, float initialValue, 
     glm::vec4 barColour, glm::vec4 baseColour,
     SliderType type) {
-    this->x = ((float)x / (float)Slider::screenWidth) * 2.0f - 1.0f;
-    this->y = (((float)y / (float)Slider::screenHeight)) * 2.0f - 1.0f;
+    this->x = Utils::pixelToScreenX(x);
+    this->y = Utils::pixelToScreenY(y);
     this->width = ((float)width / (float)Slider::screenWidth) * 2.0f;
     this->height = ((float)height / (float)Slider::screenHeight) * 2.0f;
     this->value = initialValue;
