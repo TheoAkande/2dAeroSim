@@ -11,6 +11,29 @@
 #include "Utils.h"
 using namespace std;
 
+int Utils::screenWidth, Utils::screenHeight;
+
+void Utils::setScreenDimensions(int width, int height) {
+	screenWidth = width;
+	screenHeight = height;
+}
+
+float Utils::pixelToScreenX(int x) {
+	return ((float)x / (float)screenWidth) * 2.0f - 1.0f;
+}
+
+float Utils::pixelToScreenY(int y) {
+	return ((float)y / (float)screenHeight) * 2.0f - 1.0f;
+}
+
+int Utils::screenToPixelX(float x) {
+	return (int)(((x + 1.0f) / 2.0f) * screenWidth);
+}
+
+int Utils::screenToPixelY(float y) {
+	return (int)(((y + 1.0f) / 2.0f) * screenHeight);
+}
+
 Utils::Utils() {}
 
 string Utils::readShaderFile(const char *filePath) {

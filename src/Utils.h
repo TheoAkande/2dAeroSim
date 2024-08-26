@@ -13,6 +13,8 @@
 class Utils
 {
 private:
+	static int screenWidth, screenHeight;
+
 	static std::string readShaderFile(const char *filePath);
 	static void printProgramLog(int prog);
 	static GLuint prepareShader(int shaderTYPE, const char *shaderPath);
@@ -20,6 +22,14 @@ private:
 
 public:
 	Utils();
+	static float pixelToScreenX(int x);
+	static float pixelToScreenY(int y);
+
+	static int screenToPixelX(float x);
+	static int screenToPixelY(float y);
+
+	static void setScreenDimensions(int width, int height);
+
 	static bool checkOpenGLError();
 	static void printShaderLog(GLuint shader);
 	static GLuint createShaderProgram(const char *cs);
