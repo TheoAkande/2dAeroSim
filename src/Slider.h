@@ -37,7 +37,7 @@ class Slider
         void updateBar(void);
         void drawSlider(void);
         void updateSlider(bool click, int mouseX, int mouseY);
-        
+
         static GLuint sliderShaderProgram;
         static vector<Slider *> sliders;
         static bool initialized;

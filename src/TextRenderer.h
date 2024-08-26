@@ -33,5 +33,5 @@ private:
 public:
 	TextRenderer(int, int);
     static void initTextRenderer(int screenWidth, int screenHeight);
-	static void renderInt(int num, float x, float y, float scale, TextAlignment alignment);
+	static void renderInt(int num, int x, int y, float scale, TextAlignment alignment);
 };

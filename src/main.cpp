@@ -46,8 +46,8 @@ using namespace std;
 #define simulationWidth 1000
 #define simulationHeight 1000
 
-#define FPSx -0.92f
-#define FPSy 0.95f
+#define FPSx 100
+#define FPSy 1400
 
 pair<float, float> constantForce = {0.0f, -20000.0f};
 
@@ -273,6 +273,9 @@ void baseDisplay(GLFWwindow *window) {
     Object::update();
     Slider::update(pressed, (int)xpos, windowHeight - (int)ypos);
 
+    TextRenderer::renderInt((int)(myFirstSlider->getValue() * 100), 10, 165, 3.0f, TextAlignment::LEFT);
+    TextRenderer::renderInt((int)(mySecondSlider->getValue() * 100), 225, 10, 3.0f, TextAlignment::LEFT);
+
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
@@ -288,6 +291,7 @@ void switchSimulationState(void *param) {
 
 void init(void) {
 
+    Utils::setScreenDimensions(windowWidth, windowHeight);
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
     Button::initButtons(windowWidth, windowHeight);
     Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);

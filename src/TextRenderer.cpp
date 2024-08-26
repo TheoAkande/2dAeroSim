@@ -34,7 +34,11 @@ TextRenderer::TextRenderer(int screenWidth, int screenHeight) {
     initTextRenderer(screenWidth, screenHeight);
 }
 
-void TextRenderer::renderInt(int num, float x, float y, float scale, TextAlignment alignment) {
+void TextRenderer::renderInt(int num, int x, int y, float scale, TextAlignment alignment) {
+
+    float fx = Utils::pixelToScreenX(x);
+    float fy = Utils::pixelToScreenY(y);
+
     glUseProgram(TextRenderer::textShaderProgram);
     int digits = 0;
     int digVal = 1;
@@ -44,15 +48,15 @@ void TextRenderer::renderInt(int num, float x, float y, float scale, TextAlignme
     }
 
     if (alignment == TextAlignment::RIGHT) {
-        x -= digits * TextRenderer::numOffsetX * scale;
+        fx -= digits * TextRenderer::numOffsetX * scale;
     }
 
-    float digitBaseY = y - TextRenderer::numOffsetY * scale;
+    float digitBaseY = fy;
     for (int i = 0; i < digits; i++) {
         digVal /= 10;
         int intDigit = num / digVal;
         num = num % digVal;
-        float digitBaseX = x + (float)i * TextRenderer::numOffsetX * scale;
+        float digitBaseX = fx + (float)i * TextRenderer::numOffsetX * scale;
         float digTexCoord = intDigit * 0.1f;
         boxCoords[0] = digitBaseX; 
         boxCoords[1] = digitBaseY;
