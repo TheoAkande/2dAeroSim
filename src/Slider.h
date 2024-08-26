@@ -13,7 +13,7 @@
 using namespace std;
 
 #define numSliderVAOs 1
-#define numSliderVBOs 1
+#define numSliderVBOs 2
 
 enum class SliderType
 {
