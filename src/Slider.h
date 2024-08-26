@@ -30,8 +30,11 @@ class Slider
         glm::vec4 baseColour;
         GLuint svao[numSliderVAOs];
         GLuint svbo[numSliderVBOs];
+        float baseVert[8];
+        float barVert[8];
         bool active;
         SliderType type;
+        void updateBar(void);
         void drawSlider(void);
         void updateSlider(bool click, int mouseX, int mouseY);
 
