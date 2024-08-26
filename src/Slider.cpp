@@ -56,7 +56,7 @@ void Slider::drawSlider(void) {
 void Slider::updateSlider(bool click, int mouseX, int mouseY) {
     if (click) {
         float adjustedMouseX = ((float)mouseX / (float)Slider::screenWidth) * 2.0f - 1.0f;
-        float adjustedMouseY = -(((float)mouseY / (float)Slider::screenHeight) * 2.0f - 1.0f);
+        float adjustedMouseY = (((float)mouseY / (float)Slider::screenHeight) * 2.0f - 1.0f);
         if (
             adjustedMouseX >= this->x 
             && adjustedMouseX <= this->x + this->width 
