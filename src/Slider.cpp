@@ -6,6 +6,7 @@ vector<Slider *> Slider::sliders;
 bool Slider::initialized = false;
 int Slider::screenWidth, Slider::screenHeight;
 
+
 void Slider::initSliders(int screenWidth, int screenHeight) {
     if (Slider::initialized) return;
 
@@ -17,4 +18,10 @@ void Slider::initSliders(int screenWidth, int screenHeight) {
     Slider::sliders = vector<Slider *>();
 
     Slider::initialized = true;
+}
+
+void Slider::update(bool click, int mouseX, int mouseY) {
+    for (int i = 0; i < Slider::sliders.size(); i++) {
+        if (Slider::sliders.at(i)->active) Slider::sliders.at(i)->updateSlider(click, mouseX, mouseY);
+    }
 }
