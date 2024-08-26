@@ -76,13 +76,13 @@ void Slider::updateSlider(bool click, int mouseX, int mouseY) {
 }
 
 Slider::Slider(
-    float x, float y, float width, float height, float initialValue, 
+    int x, int y, int width, int height, float initialValue, 
     glm::vec4 barColour, glm::vec4 baseColour,
     SliderType type) {
-    this->x = x;
-    this->y = y;
-    this->width = width;
-    this->height = height;
+    this->x = ((float)x / (float)Slider::screenWidth) * 2.0f - 1.0f;
+    this->y = (((float)y / (float)Slider::screenHeight)) * 2.0f - 1.0f;
+    this->width = ((float)width / (float)Slider::screenWidth) * 2.0f;
+    this->height = ((float)height / (float)Slider::screenHeight) * 2.0f;
     this->value = initialValue;
     this->barColour = barColour;
     this->baseColour = baseColour;

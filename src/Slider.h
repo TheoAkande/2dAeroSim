@@ -37,14 +37,14 @@ class Slider
         void updateBar(void);
         void drawSlider(void);
         void updateSlider(bool click, int mouseX, int mouseY);
-
+        
         static GLuint sliderShaderProgram;
         static vector<Slider *> sliders;
         static bool initialized;
         static int screenWidth, screenHeight;
     public:
         Slider(
-            float x, float y, float width, float height, float initialValue, 
+            int x, int y, int width, int height, float initialValue, 
             glm::vec4 barColour, glm::vec4 baseColour,
             SliderType type);
         float getValue(void);
