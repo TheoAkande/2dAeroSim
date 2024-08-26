@@ -68,6 +68,10 @@ Slider::Slider(
     Slider::sliders.push_back(this);
 }
 
+float Slider::getValue(void) {
+    return this->value;
+}
+
 void Slider::initSliders(int screenWidth, int screenHeight) {
     if (Slider::initialized) return;
 
