@@ -5,7 +5,6 @@ using namespace std;
 
 bool Button::initialized = false;
 std::vector<Button *> Button::buttons;
-int Button::screenWidth, Button::screenHeight;
 float Button::textureCoords[8];
 GLuint Button::emptyTexture;
 GLuint Button::buttonShaderProgram;
@@ -51,14 +50,12 @@ void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
     this->drawButton(activeTexture);
 }
 
-void Button::initButtons(int screenWidth, int screenHeight) {
+void Button::initButtons(void) {
     if (Button::initialized) return;
 
     Button::buttonShaderProgram = Utils::createShaderProgram("shaders/textureVert.glsl", "shaders/textureFrag.glsl");
     Button::emptyTexture = Utils::loadTexture("assets/textures/emptyButton.jpg");
     Button::buttons = std::vector<Button *>();
-    Button::screenHeight = screenHeight;
-    Button::screenWidth = screenWidth;
     Button::textureCoords[0] = 0.0f;
     Button::textureCoords[1] = 0.0f;
     Button::textureCoords[2] = 1.0f;
@@ -71,10 +68,12 @@ void Button::initButtons(int screenWidth, int screenHeight) {
 }
 
 Button::Button(int x, int y, int width, int height, std::function<void (void*)> onClick, void *clickData) {
+    Button::initButtons();
+
     this->buttonXAbs = x;
     this->buttonYAbs = y;
-    this->buttonX = (x / (float)Button::screenWidth) * 2.0f - 1.0f;
-    this->buttonY = (y / (float)Button::screenHeight) * 2.0f - 1.0f;
+    this->buttonX = Utils::pixelToScreenX(x);
+    this->buttonY = Utils::pixelToScreenY(y);
     this->buttonWidth = width;
     this->buttonHeight = height;
     this->onClick = onClick;
@@ -84,8 +83,8 @@ Button::Button(int x, int y, int width, int height, std::function<void (void*)> 
     this->hasHoverTexture = false;
     this->active = true;
 
-    float decimalWidth = (width / (float)Button::screenWidth) * 2.0f;
-    float decimalHeight = (height / (float)Button::screenHeight) * 2.0f;
+    float decimalWidth = Utils::pixelsToScreenWidth(width);
+    float decimalHeight = Utils::pixelsToScreenHeight(height);
 
     this->buttonCoords[0] = this->buttonX;
     this->buttonCoords[1] = this->buttonY;

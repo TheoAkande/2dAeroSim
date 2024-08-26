@@ -21,7 +21,6 @@ private:
     static std::vector<Button *> buttons;
     static GLuint buttonShaderProgram;
     static GLuint emptyTexture;
-    static int screenWidth, screenHeight;
     static float textureCoords[8];
     GLuint baseTexture, hoverTexture, clickTexture;
     GLuint bvao[numButtonVAOs];
@@ -43,7 +42,7 @@ public:
     Button *withClickTexture(const char *texture);
     void setActive(void);
     void setInactive(void);
-    static void initButtons(int screenWidth, int screenHeight);
+    static void initButtons(void);
     static void update(bool click, int mouseX, int mouseY);
 
     friend class ToggleButton;

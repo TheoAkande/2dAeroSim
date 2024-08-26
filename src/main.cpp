@@ -293,7 +293,6 @@ void init(void) {
 
     Utils::setScreenDimensions(windowWidth, windowHeight);
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
-    Button::initButtons(windowWidth, windowHeight);
     Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);
 
     myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
