@@ -409,6 +409,9 @@ double runFrame(GLFWwindow *window, double currentTime) {
         swapBuffers();
         bindComputeBuffers();
 
+        constantForce.first = (myJoystick->getValue().first - 0.5f) * 2.0f * 20000.0f;
+        constantForce.second = (myJoystick->getValue().second - 0.5f) * 2.0f * 20000.0f;
+
         xForce = constantForce.first;
         yForce = constantForce.second;
     }
