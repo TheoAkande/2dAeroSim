@@ -11,10 +11,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "EntityManager.h"
+
 #define numButtonVAOs 1
 #define numButtonVBOs 2
 
-class Button
+class Button : public Updateable
 {
 private:
     static bool initialized;
@@ -22,7 +24,7 @@ private:
     static GLuint buttonShaderProgram;
     static GLuint emptyTexture;
     static float textureCoords[8];
-    GLuint baseTexture, hoverTexture, clickTexture;
+    GLuint baseTexture, hoverTexture, clickTexture, currentTexture;
     GLuint bvao[numButtonVAOs];
     GLuint bvbo[numButtonVBOs];
     float buttonCoords[8];
@@ -32,18 +34,14 @@ private:
     bool hasBaseTexture, hasHoverTexture, hasClickTexture;
     std::function<void (void*)> onClick;
     void *clickData;
-    bool active;
-    void drawButton(GLuint texture);
-    virtual void updateButton(bool click, int mouseX, int mouseY);
+    void draw(void) override;
+    virtual void update(bool click, int mouseX, int mouseY) override;
 public:
 	Button(int x, int y, int width, int height, std::function<void (void*)> onClick, void *clickData);
     Button *withBaseTexture(const char *texture);
     Button *withHoverTexture(const char *texture);
     Button *withClickTexture(const char *texture);
-    void setActive(void);
-    void setInactive(void);
     static void initButtons(void);
-    static void update(bool click, int mouseX, int mouseY);
 
     friend class ToggleButton;
 };
@@ -54,7 +52,7 @@ private:
     bool toggled;
     std::function<void (void*)> toggleOff;
     void *toggleOffData;
-    void updateButton(bool clickOn, int mouseX, int mouseY) override;
+    void update(bool clickOn, int mouseX, int mouseY) override;
 public:
     ToggleButton(
         int x, int y, int width, int height, 

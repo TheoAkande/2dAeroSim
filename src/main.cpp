@@ -270,7 +270,7 @@ void baseDisplay(GLFWwindow *window) {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
     bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
+    // Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
     Updateable::updateEntities(pressed, (int)xpos, windowHeight - (int)ypos);
     Entity::drawEntities();
 

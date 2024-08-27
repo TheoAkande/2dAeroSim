@@ -9,7 +9,7 @@ float Button::textureCoords[8];
 GLuint Button::emptyTexture;
 GLuint Button::buttonShaderProgram;
 
-void Button::drawButton(GLuint texture) {
+void Button::draw(void) {
     glUseProgram(Button::buttonShaderProgram);
 
     glBindBuffer(GL_ARRAY_BUFFER, this->bvbo[0]);
@@ -22,11 +22,11 @@ void Button::drawButton(GLuint texture) {
     glEnableVertexAttribArray(1);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    glBindTexture(GL_TEXTURE_2D, this->currentTexture);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
+void Button::update(bool clickOn, int mouseX, int mouseY) {
     bool hover = 
         this->buttonXAbs <= mouseX && buttonXAbs + buttonWidth >= mouseX &&
         this->buttonYAbs <= mouseY && buttonYAbs + buttonHeight >= mouseY;
@@ -37,17 +37,17 @@ void Button::updateButton(bool clickOn, int mouseX, int mouseY) {
         this->onClick(clickData);
     }
     
-    GLuint activeTexture = this->hasBaseTexture ? this->baseTexture : Button::emptyTexture;
+    this->currentTexture = this->hasBaseTexture ? this->baseTexture : Button::emptyTexture;
 
     if (click && this->hasClickTexture) {
-        activeTexture = this->clickTexture;
+        this->currentTexture = this->clickTexture;
     } else if (hover && this->hasHoverTexture) {
-        activeTexture = this->hoverTexture;
+        this->currentTexture = this->hoverTexture;
     }
 
     this->clickHeld = clickOn;
 
-    this->drawButton(activeTexture);
+    this->draw();
 }
 
 void Button::initButtons(void) {
@@ -81,7 +81,6 @@ Button::Button(int x, int y, int width, int height, std::function<void (void*)> 
     this->hasBaseTexture = false;
     this->hasClickTexture = false;
     this->hasHoverTexture = false;
-    this->active = true;
 
     float decimalWidth = Utils::pixelsToScreenWidth(width);
     float decimalHeight = Utils::pixelsToScreenHeight(height);
@@ -129,20 +128,6 @@ Button *Button::withClickTexture(const char *texture) {
     return this;
 }
 
-void Button::setActive(void) {
-    this->active = true;
-}
-
-void Button::setInactive(void) {
-    this->active = false;
-}
-
-void Button::update(bool click, int mouseX, int mouseY) {
-    for (int i = 0; i < Button::buttons.size(); i++) {
-        if (Button::buttons.at(i)->active) Button::buttons.at(i)->updateButton(click, mouseX, mouseY);
-    }
-}
-
 ToggleButton::ToggleButton(
     int x, int y, int width, int height, 
     std::function<void (void*)> onToggleOn, void *toggleOnData, 
@@ -153,7 +138,7 @@ ToggleButton::ToggleButton(
     this->toggled = false;
 }
 
-void ToggleButton::updateButton(bool clickOn, int mouseX, int mouseY) {
+void ToggleButton::update(bool clickOn, int mouseX, int mouseY) {
     bool hover = 
         this->buttonXAbs <= mouseX && buttonXAbs + buttonWidth >= mouseX &&
         this->buttonYAbs <= mouseY && buttonYAbs + buttonHeight >= mouseY;
@@ -169,13 +154,13 @@ void ToggleButton::updateButton(bool clickOn, int mouseX, int mouseY) {
         }
     }
     
-    GLuint activeTexture = this->hasBaseTexture ? this->baseTexture : Button::emptyTexture;
+    this->currentTexture = this->hasBaseTexture ? this->baseTexture : Button::emptyTexture;
 
     if (this->toggled && this->hasClickTexture) {
-        activeTexture = this->clickTexture;
+        this->currentTexture = this->clickTexture;
     }
 
     this->clickHeld = clickOn;
 
-    this->drawButton(activeTexture);
+    this->draw();
 }
