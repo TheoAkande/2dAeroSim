@@ -18,15 +18,15 @@ using namespace std;
 class Entity
 {
     private:
-        bool active;
+        bool visible;
         virtual void draw(void);
 
         static vector<Entity *> entities;
     public:
         Entity(void);
-        void setActive(void);
-        void setInactive(void);
-        bool isActive(void);
+        void setVisible(void);
+        void setInvisible(void);
+        bool isVisible(void);
 
         static void drawEntities(void);
     friend class Updateable;
@@ -35,11 +35,15 @@ class Entity
 class Updateable : public Entity
 {
     private:
+        bool active;
         virtual void update(bool click, int mouseX, int mouseY);
 
         static vector<Updateable *> updateables;
     public:
         Updateable(void);
+        void setActive(void);
+        void setInactive(void);
+        bool isActive(void);
 
         static void updateEntities(bool click, int mouseX, int mouseY);
 };
