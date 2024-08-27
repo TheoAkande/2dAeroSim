@@ -16,6 +16,7 @@
 #include "Object.h"
 #include "Slider.h"
 #include "Utils.h"
+#include "EntityManager.h"
 
 using namespace std;
 
@@ -271,7 +272,8 @@ void baseDisplay(GLFWwindow *window) {
     bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
     Object::update();
-    Slider::update(pressed, (int)xpos, windowHeight - (int)ypos);
+    Updateable::updateEntities(pressed, (int)xpos, windowHeight - (int)ypos);
+    Entity::drawEntities();
 
     TextRenderer::renderInt((int)(myFirstSlider->getValue() * 100), 10, 165, 3.0f, TextAlignment::LEFT);
     TextRenderer::renderInt((int)(mySecondSlider->getValue() * 100), 225, 10, 3.0f, TextAlignment::LEFT);

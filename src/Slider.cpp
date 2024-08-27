@@ -30,7 +30,7 @@ void Slider::updateBar(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(this->barVert), &this->barVert[0], GL_STATIC_DRAW);
 }
 
-void Slider::drawSlider(void) {
+void Slider::draw(void) {
     glUseProgram(Slider::sliderShaderProgram);
 
     glBindVertexArray(this->svao[0]);
@@ -52,7 +52,7 @@ void Slider::drawSlider(void) {
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void Slider::updateSlider(bool click, int mouseX, int mouseY) {
+void Slider::update(bool click, int mouseX, int mouseY) {
     if (click) {
         float adjustedMouseX = Utils::pixelToScreenX(mouseX);
         float adjustedMouseY = Utils::pixelToScreenY(mouseY);
@@ -71,14 +71,14 @@ void Slider::updateSlider(bool click, int mouseX, int mouseY) {
         } 
     }
 
-    this->drawSlider();
+    this->draw();
 }
 
 Slider::Slider(
     int x, int y, int width, int height, float initialValue, 
     glm::vec4 barColour, glm::vec4 baseColour,
     SliderType type
-) {
+) : Updateable() {
     Slider::initSliders();
 
     this->x = Utils::pixelToScreenX(x);
@@ -89,7 +89,6 @@ Slider::Slider(
     this->barColour = barColour;
     this->baseColour = baseColour;
     this->type = type;
-    this->active = true;
 
     this->baseVert[0] = this->x;
     this->baseVert[1] = this->y;
@@ -126,10 +125,4 @@ void Slider::initSliders(void) {
     Slider::sliders = vector<Slider *>();
 
     Slider::initialized = true;
-}
-
-void Slider::update(bool click, int mouseX, int mouseY) {
-    for (int i = 0; i < Slider::sliders.size(); i++) {
-        if (Slider::sliders.at(i)->active) Slider::sliders.at(i)->updateSlider(click, mouseX, mouseY);
-    }
 }

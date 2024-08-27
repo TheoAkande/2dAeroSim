@@ -10,6 +10,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "EntityManager.h"
+
 using namespace std;
 
 #define numSliderVAOs 1
@@ -21,7 +23,7 @@ enum class SliderType
     HORIZONTAL
 };
 
-class Slider
+class Slider : public Updateable
 {
     private:
         float value;
@@ -32,11 +34,10 @@ class Slider
         GLuint svbo[numSliderVBOs];
         float baseVert[8];
         float barVert[8];
-        bool active;
         SliderType type;
         void updateBar(void);
-        void drawSlider(void);
-        void updateSlider(bool click, int mouseX, int mouseY);
+        void draw(void) override;
+        void update(bool click, int mouseX, int mouseY) override;
 
         static GLuint sliderShaderProgram;
         static vector<Slider *> sliders;
@@ -50,5 +51,4 @@ class Slider
         float getValue(void);
         
         static void initSliders(void);
-        static void update(bool click, int mouseX, int mouseY);
 };
