@@ -14,6 +14,7 @@ Entity::Entity(void) {
 void Entity::setActive(void) { this->active = true; }
 void Entity::setInactive(void) { this->active = false; }
 void Entity::draw(void) { }
+bool Entity::isActive(void) { return this->active; }
 
 void Entity::drawEntities(void) {
     for (Entity *entity : entities) {

@@ -26,6 +26,7 @@ class Entity
         Entity(void);
         void setActive(void);
         void setInactive(void);
+        bool isActive(void);
 
         static void drawEntities(void);
     friend class Updateable;
