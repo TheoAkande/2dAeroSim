@@ -219,7 +219,7 @@ void bindComputeBuffers(void) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(buffer1), curInBuffer, GL_STATIC_DRAW);
 }
 
-void setupComputeBuffers(void) {
+void loadParticlesIntoBuffer(void) {
     for (int i = 0; i < numParticlesX * numParticlesY; i++) {
         curInBuffer[i * numParticleFloats] = particles[i].x;
         curInBuffer[i * numParticleFloats + 1] = particles[i].y;
@@ -230,6 +230,10 @@ void setupComputeBuffers(void) {
         curInBuffer[i * numParticleFloats + 6] = particles[i].seed;
         curInBuffer[i * numParticleFloats + 7] = static_cast<float>(particles[i].chunk);
     }
+}
+
+void setupComputeBuffers(void) {
+    loadParticlesIntoBuffer();
 
     glGenBuffers(numCBs, computeBuffers);
     bindComputeBuffers();
@@ -244,6 +248,9 @@ void setupComputeBuffers(void) {
 void baseDisplay(GLFWwindow *window) {
     glClear(GL_DEPTH_BUFFER_BIT);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Draw particles
     glUseProgram(particleRenderingProgram);
@@ -297,6 +304,14 @@ void resetForce(void *param) {
     forceJoystick->setValue(pair<float, float>(0.5f, 0.5f));
 }
 
+extern void init(void);
+
+void resetSimulation(void *param) {
+    createParticles();
+    loadParticlesIntoBuffer();
+    bindComputeBuffers();
+}
+
 void init(void) {
 
     Utils::setScreenDimensions(windowWidth, windowHeight);
@@ -304,8 +319,13 @@ void init(void) {
     Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);
 
     pauseButton = new ToggleButton(600, 50, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
-    pauseButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
-    pauseButton->withClickTexture("assets/textures/pauseSimulation.jpg");
+    pauseButton->withBaseTexture("assets/textures/resumeSimulation.png");
+    pauseButton->withClickTexture("assets/textures/pauseSimulation.png");
+
+    resetSimulationButton = new Button(1100, 50, 300, 150, resetSimulation, nullptr);
+    resetSimulationButton->withBaseTexture("assets/textures/resetBase.png");
+    resetSimulationButton->withClickTexture("assets/textures/resetClick.png");
+    resetSimulationButton->withHoverTexture("assets/textures/resetHover.png");
 
     resetForceButton = new Button(350, 85, 80, 80, resetForce, nullptr);
     resetForceButton->withBaseTexture("assets/textures/emptyButton.jpg");
@@ -319,7 +339,7 @@ void init(void) {
     
     triangle->setColour(0.0f, 1.0f, 0.0f);
 
-    forceJoystick = new Joystick(150, 50, 150, 150, glm::vec3(0.1f, 0.4f, 0.9f), glm::vec3(0.9f, 0.4f, 0.1f));
+    forceJoystick = new Joystick(150, 50, 150, 150, glm::vec3(0.0f, 0.3f, 0.4f), glm::vec3(0.6f, 0.9f, 1.0f));
 
     lastFPSUpdate = 0.0l;
     curFPS = 1.0l;
