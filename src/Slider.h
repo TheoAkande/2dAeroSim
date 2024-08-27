@@ -14,6 +14,9 @@
 
 using namespace std;
 
+#ifndef SLIDER_H
+#define SLIDER_H
+
 #define numSliderVAOs 1
 #define numSliderVBOs 2
 
@@ -52,3 +55,5 @@ class Slider : public Updateable
         
         static void initSliders(void);
 };
+
+#endif
