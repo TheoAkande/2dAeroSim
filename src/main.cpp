@@ -26,7 +26,7 @@ using namespace std;
 #define numParticlesX 128
 #define numParticlesY 128
 #define particleMass 1.0f
-#define rangeOfMotion 300.0f
+#define rangeOfMotionMax 10000.0f
 #define vMax 5000.0f
 #define colourVMax 300.0f
 #define forceMax 30000.0f
@@ -51,6 +51,7 @@ using namespace std;
 #define FPSx 100
 #define FPSy 1400
 
+float rangeOfMotion = 0.0f;
 float force = 0.0f;
 pair<float, float> constantForce = {0.0f, 0.0f};
 
@@ -111,7 +112,7 @@ Chunks chunks = Chunks();
 double curFPS;
 Button *pauseButton, *resetForceButton, *resetSimulationButton;
 Object *square, *triangle, *inverted;
-Slider *forceSlider;
+Slider *forceSlider, *romSlider;
 Joystick *forceJoystick;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
@@ -335,8 +336,9 @@ void init(void) {
     triangle = new Object("assets/objects/triangle.2dObj");
     inverted = new Object("assets/objects/inverted.2dObj");
 
-    forceSlider = new Slider(50, 50, 50, 150, 0.0f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::VERTICAL);
-    
+    forceSlider = new Slider(50, 50, 50, 150, 0.0f, glm::vec4(0.6f, 0.9f, 1.0f, 1.0f), glm::vec4(0.0f, 0.3f, 0.4f, 1.0f), SliderType::VERTICAL);
+    romSlider = new Slider(1750, 50, 50, 150, 0.0f, glm::vec4(0.6f, 0.9f, 1.0f, 1.0f), glm::vec4(0.0f, 0.3f, 0.4f, 1.0f), SliderType::VERTICAL);
+
     triangle->setColour(0.0f, 1.0f, 0.0f);
 
     forceJoystick = new Joystick(150, 50, 150, 150, glm::vec3(0.0f, 0.3f, 0.4f), glm::vec3(0.6f, 0.9f, 1.0f));
@@ -432,6 +434,8 @@ double runFrame(GLFWwindow *window, double currentTime) {
         runComputeShader();
         swapBuffers();
         bindComputeBuffers();
+
+        rangeOfMotion = romSlider->getValue() * rangeOfMotionMax;
 
         force = forceSlider->getValue() * forceMax;
 
