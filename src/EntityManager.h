@@ -12,6 +12,9 @@
 
 using namespace std;
 
+#ifndef ENTITYMANAGER_H
+#define ENTITYMANAGER_H
+
 class Entity
 {
     private:
@@ -20,20 +23,11 @@ class Entity
 
         static vector<Entity *> entities;
     public:
-        Entity(void) { 
-            this->active = true; 
-            entities.push_back(this);
-        }
-        void setActive(void) { this->active = true; }
-        void setInactive(void) { this->active = false; }
+        Entity(void);
+        void setActive(void);
+        void setInactive(void);
 
-        static void drawEntities(void) {
-            for (Entity *entity : entities) {
-                if (entity->active) {
-                    entity->draw();
-                }
-            }
-        }
+        static void drawEntities(void);
     friend class Updateable;
 };
 
@@ -44,15 +38,9 @@ class Updateable : public Entity
 
         static vector<Updateable *> updateables;
     public:
-        Updateable(void) : Entity() {
-            updateables.push_back(this);
-        }
+        Updateable(void);
 
-        static void updateEntities(bool click, int mouseX, int mouseY) {
-            for (Updateable *updateable : updateables) {
-                if (updateable->active) {
-                    updateable->update(click, mouseX, mouseY);
-                }
-            }
-        }
+        static void updateEntities(bool click, int mouseX, int mouseY);
 };
+
+#endif
