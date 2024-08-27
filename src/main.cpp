@@ -315,7 +315,7 @@ void init(void) {
 
     triangle->setColour(0.0f, 1.0f, 0.0f);
 
-    myJoystick = new Joystick(1500, 100, 150, 150, "assets/textures/js.png", "assets/textures/stick.png");
+    myJoystick = new Joystick(1500, 100, 150, 150, glm::vec3(0.1f, 0.4f, 0.9f), glm::vec3(0.9f, 0.4f, 0.1f));
 
     lastFPSUpdate = 0.0l;
     curFPS = 1.0l;

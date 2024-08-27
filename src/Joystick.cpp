@@ -1,7 +1,7 @@
 #include "Joystick.h"
 #include "Utils.h"
 
-GLuint Joystick::jsShaderProgram;
+GLuint Joystick::squareShaderProgram, Joystick::circleShaderProgram;
 bool Joystick::initialized = false;
 float Joystick::textureCoords[8] = {
     0.0f, 0.0f,
@@ -27,7 +27,10 @@ void Joystick::updateStick(void) {
 
 void Joystick::draw(void) {
 
-    glUseProgram(Joystick::jsShaderProgram);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glUseProgram(Joystick::squareShaderProgram);
 
     glBindVertexArray(this->jvao[0]);
     this->updateStick();
@@ -36,21 +39,24 @@ void Joystick::draw(void) {
     glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, this->jvbo[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Joystick::textureCoords), &(Joystick::textureCoords[0]), GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(1);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->baseTexture);
+    GLuint colourLoc = glGetUniformLocation(Joystick::squareShaderProgram, "colourIn");
+    glUniform3f(colourLoc, this->baseColour[0], this->baseColour[1], this->baseColour[2]);
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
+    glUseProgram(Joystick::circleShaderProgram);
+
+    colourLoc = glGetUniformLocation(Joystick::circleShaderProgram, "colourIn");
+    glUniform3f(colourLoc, this->stickColour[0], this->stickColour[1], this->stickColour[2]);
+    GLuint centreLoc = glGetUniformLocation(Joystick::circleShaderProgram, "centre");
+    glUniform2f(centreLoc, this->x + this->value.first * this->width, this->y + this->value.second * this->height);
+    GLuint radiusLoc = glGetUniformLocation(Joystick::circleShaderProgram, "radiusX");
+    glUniform1f(radiusLoc, this->width / 5.0f);
+    radiusLoc = glGetUniformLocation(Joystick::circleShaderProgram, "radiusY");
+    glUniform1f(radiusLoc, this->height / 5.0f);
+
     glBindBuffer(GL_ARRAY_BUFFER, this->jvbo[1]);
     glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, this->stickTexture);
 
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
@@ -63,7 +69,7 @@ void Joystick::update(bool click, int mouseX, int mouseY) {
 
 Joystick::Joystick(
     int x, int y, int width, int height,
-    const char *baseTexture, const char *stickTexture
+    glm::vec3 baseColour, glm::vec3 stickColour
 ) : Updateable() {
     Joystick::initJoysticks();
 
@@ -86,8 +92,8 @@ Joystick::Joystick(
     this->y = Utils::pixelToScreenY(y);
     this->width = Utils::pixelsToScreenWidth(width);
     this->height = Utils::pixelsToScreenHeight(height);
-    this->baseTexture = Utils::loadTexture(baseTexture);
-    this->stickTexture = Utils::loadTexture(stickTexture);
+    this->baseColour = baseColour;
+    this->stickColour = stickColour;
 
     this->baseVert[0] = this->x;
     this->baseVert[1] = this->y;
@@ -115,7 +121,8 @@ pair<float, float> Joystick::getValue(void) {
 void Joystick::initJoysticks(void) {
     if (Joystick::initialized) return;
 
-    Joystick::jsShaderProgram = Utils::createShaderProgram("shaders/textureVert.glsl", "shaders/textureFrag.glsl");
+    Joystick::squareShaderProgram = Utils::createShaderProgram("shaders/sliderVert.glsl", "shaders/sliderFrag.glsl");
+    Joystick::circleShaderProgram = Utils::createShaderProgram("shaders/circleVert.glsl", "shaders/circleFrag.glsl");
 
     Joystick::initialized = true;
 }

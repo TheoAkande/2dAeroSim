@@ -16,16 +16,17 @@
 using namespace std;
 
 #define numJoystickVAOs 1
-#define numJoystickVBOs 3
+#define numJoystickVBOs 2
 
 class Joystick : public Updateable
 {
     private:
         pair<float, float> value;
         float x, y, width, height;
-        GLuint baseTexture, stickTexture;
         GLuint jvao[numJoystickVAOs];
         GLuint jvbo[numJoystickVBOs];
+        glm::vec3 baseColour;
+        glm::vec3 stickColour;
         float baseVert[8];
         float stickVert[8];
         Slider *xSlider, *ySlider;
@@ -34,12 +35,12 @@ class Joystick : public Updateable
         void update(bool click, int mouseX, int mouseY) override;
 
         static float textureCoords[8];
-        static GLuint jsShaderProgram;
+        static GLuint squareShaderProgram, circleShaderProgram;
         static bool initialized;
     public:
         Joystick(
             int x, int y, int width, int height, 
-            const char *baseTexture, const char *stickTexture
+            glm::vec3 baseColour, glm::vec3 stickColour
         );
         pair<float, float> getValue(void);
         
