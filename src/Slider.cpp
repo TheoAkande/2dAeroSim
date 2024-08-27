@@ -115,6 +115,11 @@ float Slider::getValue(void) {
     return this->value;
 }
 
+void Slider::setValue(float value) {
+    this->value = value;
+    this->updateBar();
+}
+
 void Slider::initSliders(void) {
     if (Slider::initialized) return;
 

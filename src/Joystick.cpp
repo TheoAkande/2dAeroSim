@@ -118,6 +118,13 @@ pair<float, float> Joystick::getValue(void) {
     return this->value;
 }
 
+void Joystick::setValue(pair<float, float> value) {
+    this->value = value;
+    this->xSlider->setValue(value.first);
+    this->ySlider->setValue(value.second);
+    this->updateStick();
+}
+
 void Joystick::initJoysticks(void) {
     if (Joystick::initialized) return;
 

@@ -51,6 +51,7 @@ class Slider : public Updateable
             glm::vec4 barColour, glm::vec4 baseColour,
             SliderType type);
         float getValue(void);
+        void setValue(float value);
         
         static void initSliders(void);
 };

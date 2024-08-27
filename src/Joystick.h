@@ -43,6 +43,7 @@ class Joystick : public Updateable
             glm::vec3 baseColour, glm::vec3 stickColour
         );
         pair<float, float> getValue(void);
+        void setValue(pair<float, float> value);
         
         static void initJoysticks(void);
 };

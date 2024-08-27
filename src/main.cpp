@@ -29,8 +29,8 @@ using namespace std;
 #define rangeOfMotion 300.0f
 #define vMax 5000.0f
 #define colourVMax 300.0f
+#define forceMax 30000.0f
 #define numParticleFloats 8
-#define force 10000.0f
 #define particleElasticity 0.975f
 
 #define scaleFactor 1080.0f
@@ -51,7 +51,9 @@ using namespace std;
 #define FPSx 100
 #define FPSy 1400
 
-pair<float, float> constantForce = {0.0f, -20000.0f};
+float force = 0.0f;
+pair<float, float> constantForce = {0.0f, 0.0f};
+
 
 bool doSimulation = false;
 bool spaceHeld = false;
@@ -107,10 +109,10 @@ struct Chunks {
 Particle particles[numParticlesX * numParticlesY];
 Chunks chunks = Chunks();
 double curFPS;
-Button *myFirstButton, *mySecondButton;
+Button *pauseButton, *resetForceButton, *resetSimulationButton;
 Object *square, *triangle, *inverted;
-Slider *myFirstSlider, *mySecondSlider;
-Joystick *myJoystick;
+Slider *forceSlider;
+Joystick *forceJoystick;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -275,8 +277,7 @@ void baseDisplay(GLFWwindow *window) {
     Updateable::updateEntities(pressed, (int)xpos, windowHeight - (int)ypos);
     Entity::drawEntities();
 
-    TextRenderer::renderInt((int)(myFirstSlider->getValue() * 100), 10, 165, 3.0f, TextAlignment::LEFT);
-    TextRenderer::renderInt((int)(mySecondSlider->getValue() * 100), 225, 10, 3.0f, TextAlignment::LEFT);
+    TextRenderer::renderInt((int)(forceSlider->getValue() * 100), 50, 215, 3.0f, TextAlignment::LEFT);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -291,31 +292,34 @@ void switchSimulationState(void *param) {
     doSimulation = !doSimulation;
 }
 
+void resetForce(void *param) {
+    forceSlider->setValue(0.0f);
+    forceJoystick->setValue(pair<float, float>(0.5f, 0.5f));
+}
+
 void init(void) {
 
     Utils::setScreenDimensions(windowWidth, windowHeight);
     TextRenderer::initTextRenderer(windowWidth, windowHeight);
     Object::initObjects(windowWidth, windowHeight, scaleFactor, simulationWidth, simulationHeight);
 
-    myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
-    myFirstButton->withHoverTexture("assets/textures/test.jpg");
-    myFirstButton->withClickTexture("assets/textures/numbers.jpg");
-    myFirstButton->setInvisible();
-    myFirstButton->setInactive();
-    mySecondButton = new ToggleButton(1000, 1300, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
-    mySecondButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
-    mySecondButton->withClickTexture("assets/textures/pauseSimulation.jpg");
+    pauseButton = new ToggleButton(600, 50, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
+    pauseButton->withBaseTexture("assets/textures/resumeSimulation.jpg");
+    pauseButton->withClickTexture("assets/textures/pauseSimulation.jpg");
+
+    resetForceButton = new Button(350, 85, 80, 80, resetForce, nullptr);
+    resetForceButton->withBaseTexture("assets/textures/emptyButton.jpg");
+    resetForceButton->withClickTexture("assets/textures/test.jpg");
 
     square = new Object("assets/objects/box.2dObj");
     triangle = new Object("assets/objects/triangle.2dObj");
     inverted = new Object("assets/objects/inverted.2dObj");
 
-    myFirstSlider = new Slider(10, 10, 50, 150, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::VERTICAL);
-    mySecondSlider = new Slider(70, 10, 150, 50, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::HORIZONTAL);
-
+    forceSlider = new Slider(50, 50, 50, 150, 0.0f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::VERTICAL);
+    
     triangle->setColour(0.0f, 1.0f, 0.0f);
 
-    myJoystick = new Joystick(1500, 100, 150, 150, glm::vec3(0.1f, 0.4f, 0.9f), glm::vec3(0.9f, 0.4f, 0.1f));
+    forceJoystick = new Joystick(150, 50, 150, 150, glm::vec3(0.1f, 0.4f, 0.9f), glm::vec3(0.9f, 0.4f, 0.1f));
 
     lastFPSUpdate = 0.0l;
     curFPS = 1.0l;
@@ -409,23 +413,13 @@ double runFrame(GLFWwindow *window, double currentTime) {
         swapBuffers();
         bindComputeBuffers();
 
-        constantForce.first = (myJoystick->getValue().first - 0.5f) * 2.0f * 20000.0f;
-        constantForce.second = (myJoystick->getValue().second - 0.5f) * 2.0f * 20000.0f;
+        force = forceSlider->getValue() * forceMax;
+
+        constantForce.first = (forceJoystick->getValue().first - 0.5f) * 2.0f * force;
+        constantForce.second = (forceJoystick->getValue().second - 0.5f) * 2.0f * force;
 
         xForce = constantForce.first;
         yForce = constantForce.second;
-    }
-    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        xForce = constantForce.first - force;
-    }
-    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        xForce = constantForce.first + force;
-    }
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        yForce = constantForce.second + force;
-    }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        yForce = constantForce.second - force;
     }
     if (!doSimulation) {
         return -1;
