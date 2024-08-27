@@ -45,7 +45,6 @@ class Slider : public Updateable
         static GLuint sliderShaderProgram;
         static vector<Slider *> sliders;
         static bool initialized;
-        static int screenWidth, screenHeight;
     public:
         Slider(
             int x, int y, int width, int height, float initialValue, 

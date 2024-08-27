@@ -23,6 +23,7 @@ add_executable(CPPOpenGL
     ${CMAKE_SOURCE_DIR}/src/Button.cpp
     ${CMAKE_SOURCE_DIR}/src/Object.cpp
     ${CMAKE_SOURCE_DIR}/src/Slider.cpp
+    ${CMAKE_SOURCE_DIR}/src/Joystick.cpp
     ${CMAKE_SOURCE_DIR}/src/EntityManager.cpp
     ${CMAKE_SOURCE_DIR}/src/main.cpp
 )

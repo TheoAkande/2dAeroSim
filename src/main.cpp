@@ -15,6 +15,7 @@
 #include "Button.h"
 #include "Object.h"
 #include "Slider.h"
+#include "Joystick.h"
 #include "Utils.h"
 #include "EntityManager.h"
 
@@ -109,6 +110,7 @@ double curFPS;
 Button *myFirstButton, *mySecondButton;
 Object *square, *triangle, *inverted;
 Slider *myFirstSlider, *mySecondSlider;
+Joystick *myJoystick;
 
 // Create the chunk indicators that will be used to determine which particles are in which chunks
 void setupChunks(void) {
@@ -312,6 +314,8 @@ void init(void) {
     mySecondSlider = new Slider(70, 10, 150, 50, 0.5f, glm::vec4(0.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 1.0f, 1.0f), SliderType::HORIZONTAL);
 
     triangle->setColour(0.0f, 1.0f, 0.0f);
+
+    myJoystick = new Joystick(1500, 100, 150, 150, "assets/textures/js.png", "assets/textures/stick.png");
 
     lastFPSUpdate = 0.0l;
     curFPS = 1.0l;
