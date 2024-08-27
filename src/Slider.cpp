@@ -70,8 +70,6 @@ void Slider::update(bool click, int mouseX, int mouseY) {
             this->updateBar();
         } 
     }
-
-    this->draw();
 }
 
 Slider::Slider(

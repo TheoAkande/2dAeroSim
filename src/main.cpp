@@ -270,7 +270,6 @@ void baseDisplay(GLFWwindow *window) {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
     bool pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    // Button::update(pressed, (int)xpos, windowHeight - (int)ypos);
     Updateable::updateEntities(pressed, (int)xpos, windowHeight - (int)ypos);
     Entity::drawEntities();
 
@@ -299,6 +298,7 @@ void init(void) {
     myFirstButton = new Button(500, 1300, 300, 150, buttonClick, nullptr);
     myFirstButton->withHoverTexture("assets/textures/test.jpg");
     myFirstButton->withClickTexture("assets/textures/numbers.jpg");
+    myFirstButton->setInvisible();
     myFirstButton->setInactive();
     mySecondButton = new ToggleButton(1000, 1300, 300, 150, switchSimulationState, nullptr, switchSimulationState, nullptr);
     mySecondButton->withBaseTexture("assets/textures/resumeSimulation.jpg");

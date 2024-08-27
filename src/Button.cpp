@@ -46,8 +46,6 @@ void Button::update(bool clickOn, int mouseX, int mouseY) {
     }
 
     this->clickHeld = clickOn;
-
-    this->draw();
 }
 
 void Button::initButtons(void) {
@@ -93,6 +91,8 @@ Button::Button(int x, int y, int width, int height, std::function<void (void*)> 
     this->buttonCoords[5] = this->buttonY + decimalHeight;
     this->buttonCoords[6] = this->buttonX;
     this->buttonCoords[7] = this->buttonY + decimalHeight;
+
+    this->baseTexture = Button::emptyTexture;
 
     glGenVertexArrays(numButtonVAOs, this->bvao);
     glBindVertexArray(this->bvao[0]);
@@ -161,6 +161,4 @@ void ToggleButton::update(bool clickOn, int mouseX, int mouseY) {
     }
 
     this->clickHeld = clickOn;
-
-    this->draw();
 }

@@ -177,7 +177,7 @@ int Object::loadAllEdges(vector<float> *edges) {
     int total = 0;
     for (int i = 0; i < Object::objects.size(); i++) {
         Object *o = Object::objects.at(i);
-        if (o->isActive()) {
+        if (o->isVisible()) {
             for (int j = 0; j < o->numEdges; j++) {
                 edges->push_back(o->edges->at(j).x1);
                 edges->push_back(o->edges->at(j).y1);
