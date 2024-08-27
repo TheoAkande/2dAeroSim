@@ -11,17 +11,18 @@ float Joystick::textureCoords[8] = {
 };
 
 void Joystick::updateStick(void) {
-    this->stickVert[0] = this->x + this->value.first * this->width / 2.0f - this->width / 5.0f;
-    this->stickVert[1] = this->y + this->value.second * this->height / 2.0f - this->height / 5.0f;
-    this->stickVert[2] = this->x + this->value.first * this->width / 2.0f + this->width / 5.0f;
-    this->stickVert[3] = this->y + this->value.second * this->height / 2.0f - this->height / 5.0f;
-    this->stickVert[4] = this->x + this->value.first * this->width / 2.0f + this->width / 5.0f;
-    this->stickVert[5] = this->y + this->value.second * this->height / 2.0f + this->height / 5.0f;
-    this->stickVert[6] = this->x + this->value.first * this->width / 2.0f - this->width / 5.0f;
-    this->stickVert[7] = this->y + this->value.second * this->height / 2.0f + this->height / 5.0f;
+    this->stickVert[0] = this->x + this->value.first * this->width - this->width / 5.0f;
+    this->stickVert[1] = this->y + this->value.second * this->height - this->height / 5.0f;
+    this->stickVert[2] = this->x + this->value.first * this->width + this->width / 5.0f;
+    this->stickVert[3] = this->y + this->value.second * this->height - this->height / 5.0f;
+    this->stickVert[4] = this->x + this->value.first * this->width + this->width / 5.0f;
+    this->stickVert[5] = this->y + this->value.second * this->height + this->height / 5.0f;
+    this->stickVert[6] = this->x + this->value.first * this->width - this->width / 5.0f;
+    this->stickVert[7] = this->y + this->value.second * this->height + this->height / 5.0f;
 
     glBindBuffer(GL_ARRAY_BUFFER, this->jvbo[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(this->stickVert), &this->stickVert[0], GL_STATIC_DRAW);
+
 }
 
 void Joystick::draw(void) {
@@ -32,7 +33,6 @@ void Joystick::draw(void) {
     this->updateStick();
 
     glBindBuffer(GL_ARRAY_BUFFER, this->jvbo[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(this->baseVert), &this->baseVert[0], GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, false, 2 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
 
@@ -98,16 +98,14 @@ Joystick::Joystick(
     this->baseVert[6] = this->x;
     this->baseVert[7] = this->y + this->height;
 
-    glGenVertexArrays(numSliderVAOs, this->jvao);
+    glGenVertexArrays(numJoystickVAOs, this->jvao);
     glBindVertexArray(this->jvao[0]);
-    glGenBuffers(numSliderVBOs, this->jvbo);
+    glGenBuffers(numJoystickVBOs, this->jvbo);
 
     glBindBuffer(GL_ARRAY_BUFFER, this->jvbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(this->baseVert), &this->baseVert[0], GL_STATIC_DRAW);
 
     this->updateStick();
-
-    glBindVertexArray(0);
 }
 
 pair<float, float> Joystick::getValue(void) {
