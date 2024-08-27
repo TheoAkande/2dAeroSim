@@ -10,6 +10,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "EntityManager.h"
+
 using namespace std;
 
 #define numObjectVAOs 1
@@ -24,7 +26,7 @@ struct Line {
     float elasticity;
 };
 
-class Object
+class Object : public Entity
 {
     private:
         vector<glm::vec2> *vertices;
@@ -35,10 +37,9 @@ class Object
         float colour[3];
         GLuint ovao[numObjectVAOs];
         GLuint ovbo[numObjectVBOs];
-        bool active;
         glm::mat4 viewMat;
         void setupDraw(void);
-        void drawObject(void);
+        void draw(void) override;
 
         static GLuint objectShaderProgram;
         static vector<Object *> objects;
@@ -62,5 +63,4 @@ class Object
         static int numObjects;
         static int loadAllEdges(vector<float> *edges);
         static void initObjects(int screenWidth, int screenHeight, float scaleFactor, float simulationWidth, float simulationHeight);
-        static void update(void);
 };

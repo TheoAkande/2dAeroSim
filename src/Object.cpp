@@ -58,7 +58,6 @@ Object::Object(const char *path) {
         edges->push_back(edge);
     }
 
-    this->active = true;
     this->numVertices = nv;
     this->numEdges = nv - 1;
     this->edges = edges;
@@ -99,7 +98,6 @@ Object::Object(vector<glm::vec2> *vertices) {
         edges->push_back(edge);
     }
 
-    this->active = true;
     this->numVertices = nv;
     this->numEdges = nv - 1;
     this->edges = edges;
@@ -127,7 +125,7 @@ void Object::setupDraw(void) {
     glEnableVertexAttribArray(0);
 }
 
-void Object::drawObject(void) {
+void Object::draw(void) {
     glUseProgram(Object::objectShaderProgram);
     glBindBuffer(GL_ARRAY_BUFFER, this->ovbo[0]);
 
@@ -166,14 +164,6 @@ void Object::translate(float x, float y) {
     // this->viewMat *= glm::translate(glm::mat4(1.0f), glm::vec3(this->x * Object::scaleX, this->y * Object::scaleY, 0.0f));
 }
 
-void Object::setActive(void) {
-    this->active = true;
-}
-
-void Object::setInactive(void) {
-    this->active = false;
-}
-
 void Object::printObject() {
     cout << "Mass: " << this->mass << endl;
     cout << "Scale: " << this->scale << endl;
@@ -187,7 +177,7 @@ int Object::loadAllEdges(vector<float> *edges) {
     int total = 0;
     for (int i = 0; i < Object::objects.size(); i++) {
         Object *o = Object::objects.at(i);
-        if (o->active) {
+        if (o->isActive()) {
             for (int j = 0; j < o->numEdges; j++) {
                 edges->push_back(o->edges->at(j).x1);
                 edges->push_back(o->edges->at(j).y1);
@@ -219,10 +209,4 @@ void Object::initObjects(int screenWidth, int screenHeight, float scaleFactor, f
     Object::scaleY = (float)Object::simulationHeight / (float)Object::screenHeight;
 
     Object::initialized = true;
-}
-
-void Object::update(void) {
-    for (int i = 0; i < Object::objects.size(); i++) {
-        if (Object::objects.at(i)->active) Object::objects.at(i)->drawObject();
-    }
 }
