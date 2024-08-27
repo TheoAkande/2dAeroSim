@@ -10,6 +10,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#ifndef UTILS_H
+#define UTILS_H
+
 class Utils
 {
 private:
@@ -42,3 +45,5 @@ public:
 	static GLuint createShaderProgram(const char *vp, const char *fp);
 	static GLuint loadTexture(const char *texImagePath);
 };
+
+#endif
